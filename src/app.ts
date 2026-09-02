@@ -2,7 +2,10 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import "express-async-errors";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
+import authRoutes from "./modules/auth/auth.routes";
+import userRoutes from "./modules/user/user.routes";
 
 const app = express();
 
@@ -41,6 +44,10 @@ app.get("/health", (_req, res) => {
     message: "Ambulance Dispatch API is healthy and running",
   });
 });
+
+// API Routes
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // 404 Catch-All Handler (for undefined routes)
 app.use((req, res) => {
