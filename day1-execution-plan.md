@@ -1,9 +1,11 @@
 # 🗓️ Day 1 Completion Plan
+
 **Date:** September 02, 2026 | **Target Duration:** ~3-4 hours
 
 ---
 
 ## ✅ Already Completed (Planning Phase)
+
 - [x] Project selected & problem domain defined (`Emergency Ambulance Dispatch System`)
 - [x] 3 roles + full RBAC permission matrix mapped out (`PATIENT`, `DRIVER`, `ADMIN`)
 - [x] 30 API endpoints planned with auth requirements
@@ -18,6 +20,7 @@
 3. Visibility: **Public** (required for assignment evaluation)
 4. Add: **README.md**, **.gitignore (Node)**, **License (MIT)**
 5. Clone or link to local directory:
+
 ```bash
 git init
 git remote add origin https://github.com/YOUR_USERNAME/ambulance-dispatch-backend.git
@@ -28,11 +31,13 @@ git remote add origin https://github.com/YOUR_USERNAME/ambulance-dispatch-backen
 ## 🔴 Step 2 — Initialize Node.js + TypeScript Project (20 min)
 
 ### 1. Initialize npm package
+
 ```bash
 npm init -y
 ```
 
 ### 2. Install all core & dev dependencies
+
 ```bash
 # Core framework & security
 npm install express dotenv cors helmet express-rate-limit
@@ -53,6 +58,7 @@ npm install -D @biomejs/biome
 ```
 
 ### 3. Generate & configure `tsconfig.json`
+
 ```json
 {
   "compilerOptions": {
@@ -76,6 +82,7 @@ npm install -D @biomejs/biome
 ```
 
 ### 4. Configure `package.json` scripts
+
 ```json
 "scripts": {
   "dev": "tsx watch src/server.ts",
@@ -93,11 +100,13 @@ npm install -D @biomejs/biome
 ```
 
 ### 5. Init Biome configuration
+
 ```bash
 npx biome init
 ```
 
 **📝 Commit #1:**
+
 ```
 feat: initialize Node.js TypeScript Express project with dependencies
 ```
@@ -144,6 +153,7 @@ src/
 ```
 
 **📝 Commit #2:**
+
 ```
 feat: add modular folder structure for all API modules
 ```
@@ -153,41 +163,44 @@ feat: add modular folder structure for all API modules
 ## 🔴 Step 4 — Express App Boilerplate (20 min)
 
 ### 1. `src/utils/AppError.ts`
+
 ```ts
 export class AppError extends Error {
   constructor(
     public message: string,
     public statusCode: number,
-    public errors?: unknown[]
+    public errors?: unknown[],
   ) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
   }
 }
 ```
 
 ### 2. `src/utils/response.ts`
+
 ```ts
-import { Response } from 'express';
+import { Response } from "express";
 
 export const sendSuccess = (
   res: Response,
   message: string,
   data: unknown,
-  statusCode = 200
+  statusCode = 200,
 ) => res.status(statusCode).json({ success: true, message, data });
 
 export const sendError = (
   res: Response,
   message: string,
   errors: unknown[] = [],
-  statusCode = 400
+  statusCode = 400,
 ) => res.status(statusCode).json({ success: false, message, errors });
 ```
 
 ### 3. `src/utils/asyncHandler.ts`
+
 ```ts
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 
 export const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
@@ -196,15 +209,16 @@ export const asyncHandler =
 ```
 
 ### 4. `src/middlewares/errorHandler.middleware.ts`
+
 ```ts
-import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../utils/AppError';
+import { Request, Response, NextFunction } from "express";
+import { AppError } from "../utils/AppError";
 
 export const errorHandler = (
   err: Error,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
@@ -213,28 +227,29 @@ export const errorHandler = (
       errors: err.errors ?? [],
     });
   }
-  console.error('[Unhandled Error]:', err);
+  console.error("[Unhandled Error]:", err);
   return res.status(500).json({
     success: false,
-    message: 'Internal server error',
+    message: "Internal server error",
     errors: [],
   });
 };
 ```
 
 ### 5. `src/app.ts`
+
 ```ts
-import express from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
-import { errorHandler } from './middlewares/errorHandler.middleware';
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 const app = express();
 
 // Security & Headers
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL ?? '*', credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL ?? "*", credentials: true }));
 
 // Rate limiting (100 requests per 15 min window)
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
@@ -243,8 +258,11 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(express.json());
 
 // Health Check Endpoint
-app.get('/health', (_req, res) => {
-  res.json({ success: true, message: 'Ambulance Dispatch API is healthy and running' });
+app.get("/health", (_req, res) => {
+  res.json({
+    success: true,
+    message: "Ambulance Dispatch API is healthy and running",
+  });
 });
 
 // Centralized error handling
@@ -254,8 +272,9 @@ export default app;
 ```
 
 ### 6. `src/server.ts`
+
 ```ts
-import app from './app';
+import app from "./app";
 
 const PORT = process.env.PORT ?? 5000;
 
@@ -265,6 +284,7 @@ app.listen(PORT, () => {
 ```
 
 ### 7. `.env.example`
+
 ```env
 PORT=5000
 NODE_ENV=development
@@ -294,6 +314,7 @@ REDIS_TOKEN=
 ```
 
 **📝 Commit #3:**
+
 ```
 feat: add Express app with helmet, cors, rate limiter, and error handler
 ```
@@ -304,6 +325,7 @@ feat: add Express app with helmet, cors, rate limiter, and error handler
 
 1. Create a free PostgreSQL instance on **[Neon.tech](https://neon.tech)** (or Supabase).
 2. Copy the Connection String into your `.env` file:
+
 ```env
 DATABASE_URL="postgresql://user:password@ep-xyz.us-east-2.aws.neon.tech/ambulance_db?sslmode=require"
 ```
@@ -313,6 +335,7 @@ DATABASE_URL="postgresql://user:password@ep-xyz.us-east-2.aws.neon.tech/ambulanc
 ## 🔴 Step 6 — Write Prisma Schema (25 min)
 
 Initialize Prisma:
+
 ```bash
 npx prisma init
 ```
@@ -563,6 +586,7 @@ model AuditLog {
 ```
 
 **📝 Commit #4:**
+
 ```
 feat: add complete Prisma schema with all entities, enums, relations, and indexes
 ```
@@ -572,15 +596,17 @@ feat: add complete Prisma schema with all entities, enums, relations, and indexe
 ## 🔴 Step 7 — Run Migration & Database Seeding (15 min)
 
 ### 1. Run initial migration
+
 ```bash
 npx prisma migrate dev --name init
 npx prisma generate
 ```
 
 ### 2. Create seed script `src/prisma/seed.ts`
+
 ```ts
-import { PrismaClient, Role, AmbulanceType } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import { PrismaClient, Role, AmbulanceType } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -589,60 +615,75 @@ async function main() {
 
   // 1. Admin
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@ambulance.dev' },
+    where: { email: "admin@ambulance.dev" },
     update: {},
     create: {
-      name: 'System Admin',
-      email: 'admin@ambulance.dev',
-      passwordHash: await hash('Admin@123'),
+      name: "System Admin",
+      email: "admin@ambulance.dev",
+      passwordHash: await hash("Admin@123"),
       role: Role.ADMIN,
-      phone: '01700000001',
+      phone: "01700000001",
     },
   });
 
   // 2. Driver user
   const driverUser = await prisma.user.upsert({
-    where: { email: 'driver1@ambulance.dev' },
+    where: { email: "driver1@ambulance.dev" },
     update: {},
     create: {
-      name: 'Driver One',
-      email: 'driver1@ambulance.dev',
-      passwordHash: await hash('Driver@123'),
+      name: "Driver One",
+      email: "driver1@ambulance.dev",
+      passwordHash: await hash("Driver@123"),
       role: Role.DRIVER,
-      phone: '01700000002',
+      phone: "01700000002",
     },
   });
 
   // 3. Patient user
   await prisma.user.upsert({
-    where: { email: 'patient1@ambulance.dev' },
+    where: { email: "patient1@ambulance.dev" },
     update: {},
     create: {
-      name: 'Patient One',
-      email: 'patient1@ambulance.dev',
-      passwordHash: await hash('Patient@123'),
+      name: "Patient One",
+      email: "patient1@ambulance.dev",
+      passwordHash: await hash("Patient@123"),
       role: Role.PATIENT,
-      phone: '01700000003',
+      phone: "01700000003",
     },
   });
 
   // 4. Ambulances
   const ambulance1 = await prisma.ambulance.upsert({
-    where: { vehicleNumber: 'AMB-001' },
+    where: { vehicleNumber: "AMB-001" },
     update: {},
-    create: { vehicleNumber: 'AMB-001', type: AmbulanceType.ADVANCED_LIFE_SUPPORT, make: 'Toyota HiAce', year: 2023 },
+    create: {
+      vehicleNumber: "AMB-001",
+      type: AmbulanceType.ADVANCED_LIFE_SUPPORT,
+      make: "Toyota HiAce",
+      year: 2023,
+    },
   });
 
   await prisma.ambulance.upsert({
-    where: { vehicleNumber: 'AMB-002' },
+    where: { vehicleNumber: "AMB-002" },
     update: {},
-    create: { vehicleNumber: 'AMB-002', type: AmbulanceType.BASIC, make: 'Ford Transit', year: 2022 },
+    create: {
+      vehicleNumber: "AMB-002",
+      type: AmbulanceType.BASIC,
+      make: "Ford Transit",
+      year: 2022,
+    },
   });
 
   await prisma.ambulance.upsert({
-    where: { vehicleNumber: 'AMB-003' },
+    where: { vehicleNumber: "AMB-003" },
     update: {},
-    create: { vehicleNumber: 'AMB-003', type: AmbulanceType.INTENSIVE_CARE, make: 'Mercedes Sprinter', year: 2024 },
+    create: {
+      vehicleNumber: "AMB-003",
+      type: AmbulanceType.INTENSIVE_CARE,
+      make: "Mercedes Sprinter",
+      year: 2024,
+    },
   });
 
   // 5. Driver Profile
@@ -651,7 +692,7 @@ async function main() {
     update: {},
     create: {
       userId: driverUser.id,
-      licenseNumber: 'DL-2024-001',
+      licenseNumber: "DL-2024-001",
       ambulanceId: ambulance1.id,
     },
   });
@@ -660,16 +701,31 @@ async function main() {
   await prisma.hospital.createMany({
     skipDuplicates: true,
     data: [
-      { name: 'Dhaka Medical College Hospital', address: 'Secretariat Rd, Dhaka', phone: '02-55165000', capacity: 50 },
-      { name: 'Square Hospital', address: '18/F Bir Uttam Qazi Nuruzzaman Sarak, Dhaka', phone: '02-8159457', capacity: 30 },
-      { name: 'Evercare Hospital', address: 'Plot 81, Block E, Bashundhara R/A, Dhaka', phone: '02-8431661', capacity: 40 },
+      {
+        name: "Dhaka Medical College Hospital",
+        address: "Secretariat Rd, Dhaka",
+        phone: "02-55165000",
+        capacity: 50,
+      },
+      {
+        name: "Square Hospital",
+        address: "18/F Bir Uttam Qazi Nuruzzaman Sarak, Dhaka",
+        phone: "02-8159457",
+        capacity: 30,
+      },
+      {
+        name: "Evercare Hospital",
+        address: "Plot 81, Block E, Bashundhara R/A, Dhaka",
+        phone: "02-8431661",
+        capacity: 40,
+      },
     ],
   });
 
-  console.log('✅ Seed data successfully created:');
-  console.log('   Admin:   admin@ambulance.dev / Admin@123');
-  console.log('   Driver:  driver1@ambulance.dev / Driver@123');
-  console.log('   Patient: patient1@ambulance.dev / Patient@123');
+  console.log("✅ Seed data successfully created:");
+  console.log("   Admin:   admin@ambulance.dev / Admin@123");
+  console.log("   Driver:  driver1@ambulance.dev / Driver@123");
+  console.log("   Patient: patient1@ambulance.dev / Patient@123");
 }
 
 main()
@@ -683,11 +739,13 @@ main()
 ```
 
 ### 3. Run the seed command
+
 ```bash
 npm run db:seed
 ```
 
 **📝 Commit #5:**
+
 ```
 feat: add database migrations and seed data with admin, driver, patient, ambulances, hospitals
 ```
@@ -706,6 +764,7 @@ feat: add database migrations and seed data with admin, driver, patient, ambulan
 5. Trigger initial deploy -> Verify `/health` on the live Render URL.
 
 **📝 Commit #6:**
+
 ```
 chore: add render deployment config and production env setup
 ```

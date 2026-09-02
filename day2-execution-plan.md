@@ -568,4 +568,3 @@ npm run dev
 - [x] Biome formatting and linting clean
 - [x] Google OAuth configured with passport strategy and routes
 - [x] Clean, semantic Git commits pushed to GitHub
-
