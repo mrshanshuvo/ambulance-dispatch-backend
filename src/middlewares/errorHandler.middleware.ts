@@ -1,5 +1,5 @@
-import type { NextFunction, Request, Response } from 'express';
-import { AppError } from '../utils/AppError';
+import type { NextFunction, Request, Response } from "express";
+import { AppError } from "../utils/AppError";
 
 export const errorHandler = (
   err: Error,
@@ -15,10 +15,10 @@ export const errorHandler = (
     });
   }
 
-  console.error('[Unhandled Error]:', err);
+  console.error("[Unhandled Error]:", err);
   return res.status(500).json({
     success: false,
-    message: 'Internal server error',
+    message: "Internal server error",
     errors: [],
   });
 };

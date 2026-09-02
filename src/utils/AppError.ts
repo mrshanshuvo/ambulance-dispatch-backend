@@ -5,6 +5,6 @@ export class AppError extends Error {
     public errors?: unknown[],
   ) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
   }
 }
