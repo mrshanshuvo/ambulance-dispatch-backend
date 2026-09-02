@@ -1,12 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/AppError";
-import { verifyAccessToken } from "../utils/jwt";
+import { type JwtPayload, verifyAccessToken } from "../utils/jwt";
 
-// Extend Express Request to include user
+// Extend Express.User so Passport and custom auth middlewares share the same type definition
 declare global {
   namespace Express {
-    interface Request {
-      user?: { userId: string; role: string };
+    interface User {
+      userId: string;
+      role: string;
     }
   }
 }

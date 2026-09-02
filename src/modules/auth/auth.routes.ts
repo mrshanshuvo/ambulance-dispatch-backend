@@ -46,13 +46,13 @@ router.get(
     session: false,
   }),
   (req, res) => {
-    const user = req.user as { id: string; role: string };
+    const user = req.user as Express.User;
     const accessToken = generateAccessToken({
-      userId: user.id,
+      userId: user.userId,
       role: user.role,
     });
     const refreshToken = generateRefreshToken({
-      userId: user.id,
+      userId: user.userId,
       role: user.role,
     });
 

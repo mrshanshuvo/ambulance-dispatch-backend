@@ -43,7 +43,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             });
           }
 
-          return done(null, user);
+          return done(null, { userId: user.id, role: user.role });
         } catch (error) {
           return done(error as Error);
         }
