@@ -1,0 +1,226 @@
+// ─── PASTE THIS INTO: https://dbdiagram.io ───────────────────────────────────
+// Emergency Ambulance Dispatch System — ERD
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  PATIENT
+  DRIVER
+  ADMIN
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RequestStatus {
+  PENDING
+  DISPATCHED
+  CANCELLED
+  COMPLETED
+}
+
+enum DispatchStatus {
+  DISPATCHED
+  EN_ROUTE
+  PATIENT_PICKUP
+  HOSPITAL_SELECTED
+  HOSPITAL_ARRIVAL
+  COMPLETED
+}
+
+enum AmbulanceStatus {
+  AVAILABLE
+  DISPATCHED
+  MAINTENANCE
+  RETIRED
+}
+
+enum AmbulanceType {
+  BASIC
+  ADVANCED_LIFE_SUPPORT
+  INTENSIVE_CARE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentGateway {
+  STRIPE
+  BKASH
+  SSLCOMMERZ
+}
+
+// ─── TABLES ──────────────────────────────────────────────────────────────────
+
+Table User {
+  id           varchar     [pk, not null, note: 'UUID']
+  name         varchar     [not null]
+  email        varchar     [unique, not null]
+  passwordHash varchar     [null, note: 'Null for OAuth users']
+  googleId     varchar     [unique, null]
+  role         Role        [not null, default: 'PATIENT']
+  phone        varchar     [null]
+  address      varchar     [null]
+  isActive     boolean     [not null, default: true]
+  createdAt    timestamp   [not null, default: `now()`]
+  updatedAt    timestamp   [not null]
+  deletedAt    timestamp   [null, note: 'Soft delete']
+
+  indexes {
+    email
+    googleId
+    role
+    deletedAt
+  }
+}
+
+Table EmergencyRequest {
+  id             varchar        [pk, not null, note: 'UUID']
+  callerId       varchar        [not null, ref: > User.id]
+  priority       Priority       [not null, default: 'HIGH']
+  status         RequestStatus  [not null, default: 'PENDING']
+  pickupAddress  varchar        [not null]
+  pickupLat      float          [null]
+  pickupLng      float          [null]
+  description    varchar        [null]
+  createdAt      timestamp      [not null, default: `now()`]
+  updatedAt      timestamp      [not null]
+  deletedAt      timestamp      [null, note: 'Soft delete']
+
+  indexes {
+    callerId
+    status
+    priority
+    createdAt
+    deletedAt
+  }
+}
+
+Table Ambulance {
+  id            varchar         [pk, not null, note: 'UUID']
+  vehicleNumber varchar         [unique, not null]
+  type          AmbulanceType   [not null]
+  status        AmbulanceStatus [not null, default: 'AVAILABLE']
+  make          varchar         [null, note: 'e.g. Toyota, Mercedes']
+  year          int             [null]
+  createdAt     timestamp       [not null, default: `now()`]
+  updatedAt     timestamp       [not null]
+  deletedAt     timestamp       [null, note: 'Soft delete']
+
+  indexes {
+    status
+    deletedAt
+  }
+}
+
+Table Driver {
+  id            varchar   [pk, not null, note: 'UUID']
+  userId        varchar   [unique, not null, ref: - User.id]
+  licenseNumber varchar   [unique, not null]
+  ambulanceId   varchar   [unique, null, ref: - Ambulance.id, note: 'Assigned ambulance']
+  isAvailable   boolean   [not null, default: true]
+  createdAt     timestamp [not null, default: `now()`]
+  updatedAt     timestamp [not null]
+  deletedAt     timestamp [null, note: 'Soft delete']
+
+  indexes {
+    userId
+    ambulanceId
+    isAvailable
+    deletedAt
+  }
+}
+
+Table Hospital {
+  id        varchar   [pk, not null, note: 'UUID']
+  name      varchar   [not null]
+  address   varchar   [not null]
+  lat       float     [null]
+  lng       float     [null]
+  phone     varchar   [not null]
+  capacity  int       [null, note: 'Emergency bed capacity']
+  createdAt timestamp [not null, default: `now()`]
+  updatedAt timestamp [not null]
+  deletedAt timestamp [null, note: 'Soft delete']
+
+  indexes {
+    name
+    deletedAt
+  }
+}
+
+Table Dispatch {
+  id           varchar        [pk, not null, note: 'UUID']
+  requestId    varchar        [unique, not null, ref: - EmergencyRequest.id, note: '1:1 with request']
+  ambulanceId  varchar        [not null, ref: > Ambulance.id]
+  driverId     varchar        [not null, ref: > Driver.id]
+  hospitalId   varchar        [null, ref: > Hospital.id, note: 'Set at HOSPITAL_SELECTED stage']
+  status       DispatchStatus [not null, default: 'DISPATCHED']
+  dispatchedAt timestamp      [not null, default: `now()`]
+  completedAt  timestamp      [null]
+  updatedAt    timestamp      [not null]
+
+  indexes {
+    requestId
+    ambulanceId
+    driverId
+    hospitalId
+    status
+  }
+}
+
+Table TripStatusLog {
+  id              varchar        [pk, not null, note: 'UUID']
+  dispatchId      varchar        [not null, ref: > Dispatch.id]
+  status          DispatchStatus [not null]
+  note            varchar        [null]
+  updatedByUserId varchar        [not null, ref: > User.id]
+  createdAt       timestamp      [not null, default: `now()`]
+
+  indexes {
+    dispatchId
+    createdAt
+  }
+}
+
+Table Payment {
+  id            varchar        [pk, not null, note: 'UUID']
+  requestId     varchar        [unique, not null, ref: - EmergencyRequest.id, note: '1:1 with request']
+  amount        float          [not null]
+  currency      varchar        [not null, default: 'BDT']
+  gateway       PaymentGateway [not null]
+  gatewayTxnId  varchar        [unique, null, note: 'Gateway transaction reference']
+  status        PaymentStatus  [not null, default: 'PENDING']
+  createdAt     timestamp      [not null, default: `now()`]
+  updatedAt     timestamp      [not null]
+
+  indexes {
+    requestId
+    status
+    gatewayTxnId
+  }
+}
+
+Table AuditLog {
+  id         varchar   [pk, not null, note: 'UUID']
+  actorId    varchar   [not null, ref: > User.id, note: 'Who performed the action']
+  action     varchar   [not null, note: 'e.g. ROLE_UPDATED, AMBULANCE_RETIRED']
+  entityType varchar   [not null, note: 'e.g. User, Ambulance, Driver']
+  entityId   varchar   [not null, note: 'ID of the affected record']
+  metadata   varchar   [null, note: 'JSON: before/after snapshot']
+  createdAt  timestamp [not null, default: `now()`]
+
+  indexes {
+    actorId
+    entityType
+    createdAt
+  }
+}
