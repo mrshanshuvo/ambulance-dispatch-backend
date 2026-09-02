@@ -16,12 +16,38 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 // Body parsing
 app.use(express.json());
 
+// Root Welcome / API Info Endpoint
+app.get("/", (_req, res) => {
+  res.json({
+    success: true,
+    message: "Welcome to Emergency Ambulance Dispatch API",
+    data: {
+      name: "Emergency Ambulance Dispatch System API",
+      version: "1.0.0",
+      status: "online",
+      environment: process.env.NODE_ENV ?? "development",
+      healthCheck: "/health",
+      documentation:
+        "https://documenter.getpostman.com/view/ambulance-dispatch-api",
+    },
+  });
+});
+
 // Health Check Endpoint
 app.get("/health", (_req, res) => {
-	res.json({
-		success: true,
-		message: "Ambulance Dispatch API is healthy and running",
-	});
+  res.json({
+    success: true,
+    message: "Ambulance Dispatch API is healthy and running",
+  });
+});
+
+// 404 Catch-All Handler (for undefined routes)
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.originalUrl} not found on this server`,
+    errors: [],
+  });
 });
 
 // Centralized error handling (must be last)
