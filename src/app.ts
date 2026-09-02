@@ -18,37 +18,37 @@ app.use(express.json());
 
 // Root Welcome / API Info Endpoint
 app.get("/", (_req, res) => {
-	res.json({
-		success: true,
-		message: "Welcome to Emergency Ambulance Dispatch API",
-		data: {
-			name: "Emergency Ambulance Dispatch System API",
-			version: "1.0.0",
-			status: "online",
-			environment: process.env.NODE_ENV ?? "development",
-			healthCheck: "/health",
-			documentation:
-				process.env.DOCS_URL ??
-				"https://github.com/mrshanshuvo/ambulance-dispatch-backend#readme",
-		},
-	});
+  res.json({
+    success: true,
+    message: "Welcome to Emergency Ambulance Dispatch API",
+    data: {
+      name: "Emergency Ambulance Dispatch System API",
+      version: "1.0.0",
+      status: "online",
+      environment: process.env.NODE_ENV ?? "development",
+      healthCheck: "/health",
+      documentation:
+        process.env.DOCS_URL ??
+        "https://github.com/mrshanshuvo/ambulance-dispatch-backend#readme",
+    },
+  });
 });
 
 // Health Check Endpoint
 app.get("/health", (_req, res) => {
-	res.json({
-		success: true,
-		message: "Ambulance Dispatch API is healthy and running",
-	});
+  res.json({
+    success: true,
+    message: "Ambulance Dispatch API is healthy and running",
+  });
 });
 
 // 404 Catch-All Handler (for undefined routes)
 app.use((req, res) => {
-	res.status(404).json({
-		success: false,
-		message: `Route ${req.method} ${req.originalUrl} not found on this server`,
-		errors: [],
-	});
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.originalUrl} not found on this server`,
+    errors: [],
+  });
 });
 
 // Centralized error handling (must be last)
