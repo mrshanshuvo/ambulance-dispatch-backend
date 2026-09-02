@@ -3,6 +3,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import "express-async-errors";
+import { envConfig } from "./config/env";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/user/user.routes";
@@ -11,7 +12,7 @@ const app = express();
 
 // Security & Headers
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL ?? "*", credentials: true }));
+app.use(cors({ origin: envConfig.clientUrl, credentials: true }));
 
 // Rate limiting (100 requests per 15 min window)
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
@@ -28,11 +29,9 @@ app.get("/", (_req, res) => {
       name: "Emergency Ambulance Dispatch System API",
       version: "1.0.0",
       status: "online",
-      environment: process.env.NODE_ENV ?? "development",
+      environment: envConfig.env,
       healthCheck: "/health",
-      documentation:
-        process.env.DOCS_URL ??
-        "https://github.com/mrshanshuvo/ambulance-dispatch-backend#readme",
+      documentation: envConfig.docsUrl,
     },
   });
 });

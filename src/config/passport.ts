@@ -4,16 +4,15 @@ import {
   type Profile,
 } from "passport-google-oauth20";
 import { prisma } from "./db";
+import { envConfig } from "./env";
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+if (envConfig.google.clientId && envConfig.google.clientSecret) {
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL:
-          process.env.GOOGLE_CALLBACK_URL ||
-          "http://localhost:5000/api/v1/auth/google/callback",
+        clientID: envConfig.google.clientId,
+        clientSecret: envConfig.google.clientSecret,
+        callbackURL: envConfig.google.callbackUrl,
       },
       async (_accessToken, _refreshToken, profile: Profile, done) => {
         try {

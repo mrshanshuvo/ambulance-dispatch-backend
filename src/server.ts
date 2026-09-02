@@ -1,10 +1,10 @@
-import dotenv from "dotenv";
 import app from "./app";
+import { envConfig } from "./config/env";
 
-dotenv.config();
-
-const PORT = process.env.PORT ?? 5000;
+const PORT = envConfig.port;
 
 app.listen(PORT, () => {
-  console.log(`🚑 Emergency Dispatch API running on port ${PORT}`);
+  console.log(
+    `🚑 Emergency Dispatch API running on port ${PORT} in ${envConfig.env} mode`,
+  );
 });
