@@ -11,16 +11,16 @@ import {
 
 const router = Router();
 
-// POST /api/v1/payments/webhook — Stripe webhook (raw body, no auth)
+// POST /api/v1/payments/stripe/webhook (or /webhook) — Stripe webhook (raw body, no auth)
 router.post(
-  "/webhook",
+  ["/stripe/webhook", "/webhook"],
   express.raw({ type: "application/json" }),
   paymentController.stripeWebhook,
 );
 
-// POST /api/v1/payments/checkout — Patient initiates Stripe checkout
+// POST /api/v1/payments/stripe/checkout (or /checkout) — Patient initiates Stripe checkout
 router.post(
-  "/checkout",
+  ["/stripe/checkout", "/checkout"],
   authenticate,
   authorize("PATIENT"),
   validate(createCheckoutSchema),

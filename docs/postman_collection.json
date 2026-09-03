@@ -975,9 +975,9 @@
               "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"amount\": 1500,\n  \"currency\": \"bdt\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/checkout",
+              "raw": "{{baseUrl}}/api/v1/payments/stripe/checkout",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "payments", "checkout"]
+              "path": ["api", "v1", "payments", "stripe", "checkout"]
             },
             "description": "Creates a Stripe Checkout session for an emergency request. The response contains a `checkoutUrl` — open it in the browser to complete payment. Use Stripe test card: 4242 4242 4242 4242, any future date, any CVV."
           }
@@ -1071,9 +1071,9 @@
               "raw": "{}\n"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/webhook",
+              "raw": "{{baseUrl}}/api/v1/payments/stripe/webhook",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "payments", "webhook"]
+              "path": ["api", "v1", "payments", "stripe", "webhook"]
             },
             "description": "This endpoint is called by Stripe when payment events occur. Test locally using:\n```\nstripe listen --forward-to localhost:5000/api/v1/payments/webhook\n```\nTrigger test events with:\n```\nstripe trigger checkout.session.completed\n```"
           }
