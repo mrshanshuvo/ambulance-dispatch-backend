@@ -13,7 +13,10 @@
     "db:studio": "prisma studio",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "format": "biome format --write src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "prisma": {
     "seed": "tsx src/prisma/seed.ts"
@@ -63,6 +66,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.0",
-    "tsx": "^4.15.0"
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "supertest": "^7.2.2",
+    "tsx": "^4.15.0",
+    "vitest": "^4.1.11"
   }
 }
