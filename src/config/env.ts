@@ -26,6 +26,7 @@ export const envConfig = {
   },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || "",
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || "",
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
   },
   cloudinary: {
@@ -34,7 +35,14 @@ export const envConfig = {
     apiSecret: process.env.CLOUDINARY_API_SECRET || "",
   },
   redis: {
-    url: process.env.REDIS_URL || "",
-    token: process.env.REDIS_TOKEN || "",
+    url:
+      process.env.REDIS_URL ||
+      (process.env.REDIS_HOST
+        ? `redis://${process.env.REDIS_USERNAME || "default"}:${process.env.REDIS_PASSWORD || ""}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT || 6379}`
+        : ""),
+    host: process.env.REDIS_HOST || "",
+    port: Number(process.env.REDIS_PORT) || 6379,
+    username: process.env.REDIS_USERNAME || "default",
+    password: process.env.REDIS_PASSWORD || "",
   },
 } as const;
