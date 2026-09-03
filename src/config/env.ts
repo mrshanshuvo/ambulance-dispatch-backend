@@ -41,6 +41,18 @@ export const envConfig = {
       process.env.BKASH_CALLBACK_URL ||
       "http://localhost:5000/api/v1/payments/bkash/callback",
   },
+  sslcommerz: {
+    storeId: process.env.SSLCOMMERZ_STORE_ID || "emerg6a993ce356e43",
+    storePassword:
+      process.env.SSLCOMMERZ_STORE_PASSWORD || "emerg6a993ce356e43@ssl",
+    isLive: process.env.SSLCOMMERZ_IS_LIVE === "true",
+    sessionUrl:
+      process.env.SSLCOMMERZ_SESSION_URL ||
+      "https://sandbox.sslcommerz.com/gwprocess/v4/process.php",
+    validationUrl:
+      process.env.SSLCOMMERZ_VALIDATION_URL ||
+      "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php",
+  },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
     apiKey: process.env.CLOUDINARY_API_KEY || "",

@@ -87,3 +87,22 @@ vi.mock("../src/utils/bkash", () => ({
     currency: "BDT",
   })),
 }));
+
+// Mock SSLCommerz helper network calls
+vi.mock("../src/utils/sslcommerz", () => ({
+  initSSLCommerzPayment: vi.fn(async (params) => ({
+    status: "SUCCESS",
+    sessionkey: `SSL_SESSION_${Date.now()}`,
+    GatewayPageURL:
+      "https://sandbox.sslcommerz.com/EasyCheckOut/testcheckout/mock_url",
+  })),
+  validateSSLCommerzPayment: vi.fn(async (valId) => ({
+    status: "VALIDATED",
+    tran_id: `SSL_TRX_${Date.now()}`,
+    val_id: valId,
+    amount: "1500",
+    currency: "BDT",
+    card_type: "VISA-DBBL",
+    tran_date: new Date().toISOString(),
+  })),
+}));

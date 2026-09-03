@@ -6,7 +6,7 @@ import { logAudit } from "../../utils/auditLogger";
 import { sendSuccess } from "../../utils/response";
 import * as paymentService from "./payment.service";
 
-// POST /api/v1/payments/checkout (Stripe)
+// POST /api/v1/payments/stripe/checkout
 export const createCheckout = asyncHandler(
   async (req: Request, res: Response) => {
     if (!req.user?.userId) throw new AppError("Unauthorized", 401);
@@ -25,7 +25,7 @@ export const createCheckout = asyncHandler(
   },
 );
 
-// POST /api/v1/payments/bkash/create (bKash)
+// POST /api/v1/payments/bkash/create
 export const createBkashCheckout = asyncHandler(
   async (req: Request, res: Response) => {
     if (!req.user?.userId) throw new AppError("Unauthorized", 401);
@@ -44,7 +44,7 @@ export const createBkashCheckout = asyncHandler(
   },
 );
 
-// POST /api/v1/payments/bkash/execute (bKash)
+// POST /api/v1/payments/bkash/execute
 export const executeBkash = asyncHandler(
   async (req: Request, res: Response) => {
     if (!req.user?.userId) throw new AppError("Unauthorized", 401);
@@ -63,6 +63,90 @@ export const executeBkash = asyncHandler(
   },
 );
 
+// POST /api/v1/payments/sslcommerz/initiate
+export const initSSLCommerz = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
+    const result = await paymentService.initSSLCommerzPayment(
+      req.user.userId,
+      req.body,
+    );
+    await logAudit(
+      req.user.userId,
+      "INITIATE_SSLCOMMERZ_PAYMENT",
+      "Payment",
+      result.payment.id,
+      { sessionkey: result.sessionkey, gateway: "SSLCOMMERZ" },
+    );
+    sendSuccess(
+      res,
+      "SSLCommerz session initialized successfully",
+      result,
+      201,
+    );
+  },
+);
+
+// POST /api/v1/payments/sslcommerz/success (Browser callback from SSLCommerz)
+export const sslcommerzSuccess = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestId = req.query.requestId as string;
+    const { val_id } = req.body;
+
+    if (!requestId || !val_id) {
+      throw new AppError("Invalid SSLCommerz success payload", 400);
+    }
+
+    const result = await paymentService.finalizeSSLCommerzPayment(
+      requestId,
+      val_id,
+    );
+    sendSuccess(res, "SSLCommerz payment validated and completed", result);
+  },
+);
+
+// POST /api/v1/payments/sslcommerz/fail
+export const sslcommerzFail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestId = req.query.requestId as string;
+    sendSuccess(
+      res,
+      "SSLCommerz payment failed",
+      { requestId, status: "FAILED" },
+      400,
+    );
+  },
+);
+
+// POST /api/v1/payments/sslcommerz/cancel
+export const sslcommerzCancel = asyncHandler(
+  async (req: Request, res: Response) => {
+    const requestId = req.query.requestId as string;
+    sendSuccess(
+      res,
+      "SSLCommerz payment was cancelled by user",
+      { requestId, status: "CANCELLED" },
+      200,
+    );
+  },
+);
+
+// POST /api/v1/payments/sslcommerz/ipn (Instant Payment Notification)
+export const sslcommerzIPN = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { val_id, tran_id, status } = req.body;
+    if (val_id && (status === "VALID" || status === "VALIDATED")) {
+      // Find request by tran_id
+      const payment = await paymentService.finalizeSSLCommerzPayment(
+        req.body.value_a || "",
+        val_id,
+      );
+      return res.json({ success: true, payment });
+    }
+    res.json({ success: true, received: true });
+  },
+);
+
 // GET /api/v1/payments/:requestId
 export const getPaymentStatus = asyncHandler(
   async (req: Request, res: Response) => {
@@ -77,7 +161,7 @@ export const getPaymentStatus = asyncHandler(
   },
 );
 
-// POST /api/v1/payments/webhook (Stripe)
+// POST /api/v1/payments/stripe/webhook
 export const stripeWebhook = asyncHandler(
   async (req: Request, res: Response) => {
     const signature = req.headers["stripe-signature"];

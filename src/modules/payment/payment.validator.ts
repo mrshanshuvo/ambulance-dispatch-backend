@@ -29,8 +29,19 @@ export const executeBkashSchema = z.object({
   }),
 });
 
+export const initSSLCommerzSchema = z.object({
+  body: z.object({
+    requestId: z.string().uuid("Must be a valid request ID"),
+    amount: z
+      .number()
+      .positive("Amount must be positive")
+      .min(10, "Minimum amount is 10 BDT"),
+  }),
+});
+
 export type CreateCheckoutInput = z.infer<typeof createCheckoutSchema>["body"];
 export type CreateBkashCheckoutInput = z.infer<
   typeof createBkashCheckoutSchema
 >["body"];
 export type ExecuteBkashInput = z.infer<typeof executeBkashSchema>["body"];
+export type InitSSLCommerzInput = z.infer<typeof initSSLCommerzSchema>["body"];

@@ -1059,6 +1059,43 @@
           }
         },
         {
+          "name": "Initiate SSLCommerz Payment (PATIENT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.gatewayPageURL) {",
+                  "        console.log('SSLCommerz Gateway URL:', jsonData.data.gatewayPageURL);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"amount\": 2500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/sslcommerz/initiate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "payments", "sslcommerz", "initiate"]
+            },
+            "description": "Initializes an SSLCommerz hosted checkout session. Returns `gatewayPageURL` which the patient opens to pay via Cards, Mobile Banking (bKash/Nagad/Rocket), or Net Banking."
+          }
+        },
+        {
           "name": "Stripe Webhook (Simulate — for local dev)",
           "request": {
             "method": "POST",

@@ -3,10 +3,12 @@ import { prisma } from "../../config/db";
 import { stripe } from "../../config/stripe";
 import { AppError } from "../../utils/AppError";
 import * as bkashHelper from "../../utils/bkash";
+import * as sslcommerzHelper from "../../utils/sslcommerz";
 import type {
   CreateBkashCheckoutInput,
   CreateCheckoutInput,
   ExecuteBkashInput,
+  InitSSLCommerzInput,
 } from "./payment.validator";
 
 // ─── Create Stripe Checkout Session ──────────────────────────────────────────
@@ -15,7 +17,6 @@ export const createCheckoutSession = async (
   callerId: string,
   data: CreateCheckoutInput,
 ) => {
-  // 1. Validate the emergency request belongs to this patient
   const request = await prisma.emergencyRequest.findFirst({
     where: { id: data.requestId, callerId, deletedAt: null },
     include: { payment: true },
@@ -24,12 +25,10 @@ export const createCheckoutSession = async (
     throw new AppError("Emergency request not found", 404);
   }
 
-  // 2. Prevent double-payment
   if (request.payment && request.payment.status === "SUCCESS") {
     throw new AppError("This request has already been paid", 409);
   }
 
-  // 3. Only allow payment for dispatched or completed requests
   if (!["DISPATCHED", "COMPLETED"].includes(request.status)) {
     throw new AppError(
       "Payment is only allowed for dispatched or completed requests",
@@ -37,7 +36,6 @@ export const createCheckoutSession = async (
     );
   }
 
-  // 4. Create Stripe Checkout Session
   const amountInPaisa = Math.round(data.amount * 100);
 
   const session = await stripe.checkout.sessions.create({
@@ -64,7 +62,6 @@ export const createCheckoutSession = async (
     cancel_url: `${process.env.CLIENT_URL || "http://localhost:3000"}/payment/cancel`,
   });
 
-  // 5. Upsert a pending Payment record in DB
   const payment = await prisma.payment.upsert({
     where: { requestId: data.requestId },
     update: {
@@ -171,7 +168,6 @@ export const executeBkashPayment = async (
     },
   });
 
-  // Complete request if dispatched
   await prisma.emergencyRequest.updateMany({
     where: { id: data.requestId, status: { in: ["DISPATCHED", "PENDING"] } },
     data: { status: "COMPLETED" },
@@ -180,6 +176,96 @@ export const executeBkashPayment = async (
   return {
     trxID: execRes.trxID,
     amount: execRes.amount,
+    status: payment.status,
+    payment,
+  };
+};
+
+// ─── Initialize SSLCommerz Payment ───────────────────────────────────────────
+
+export const initSSLCommerzPayment = async (
+  callerId: string,
+  data: InitSSLCommerzInput,
+) => {
+  const request = await prisma.emergencyRequest.findFirst({
+    where: { id: data.requestId, callerId, deletedAt: null },
+    include: { caller: true, payment: true },
+  });
+  if (!request) {
+    throw new AppError("Emergency request not found", 404);
+  }
+
+  if (request.payment && request.payment.status === "SUCCESS") {
+    throw new AppError("This request has already been paid", 409);
+  }
+
+  if (!["DISPATCHED", "COMPLETED"].includes(request.status)) {
+    throw new AppError(
+      "Payment is only allowed for dispatched or completed requests",
+      400,
+    );
+  }
+
+  const sslRes = await sslcommerzHelper.initSSLCommerzPayment({
+    amount: data.amount,
+    requestId: data.requestId,
+    customerName: request.caller.name,
+    customerEmail: request.caller.email,
+    customerPhone: request.caller.phone || undefined,
+    customerAddress: request.pickupAddress,
+  });
+
+  const payment = await prisma.payment.upsert({
+    where: { requestId: data.requestId },
+    update: {
+      amount: data.amount,
+      currency: "BDT",
+      gateway: "SSLCOMMERZ",
+      sessionId: sslRes.sessionkey,
+      status: "PENDING",
+    },
+    create: {
+      requestId: data.requestId,
+      amount: data.amount,
+      currency: "BDT",
+      gateway: "SSLCOMMERZ",
+      sessionId: sslRes.sessionkey,
+      status: "PENDING",
+    },
+  });
+
+  return {
+    sessionkey: sslRes.sessionkey,
+    gatewayPageURL: sslRes.GatewayPageURL,
+    payment,
+  };
+};
+
+// ─── Validate & Finalize SSLCommerz Payment ──────────────────────────────────
+
+export const finalizeSSLCommerzPayment = async (
+  requestId: string,
+  valId: string,
+) => {
+  const validationRes = await sslcommerzHelper.validateSSLCommerzPayment(valId);
+
+  const payment = await prisma.payment.update({
+    where: { requestId },
+    data: {
+      status: "SUCCESS",
+      gatewayTxnId: validationRes.tran_id,
+    },
+  });
+
+  await prisma.emergencyRequest.updateMany({
+    where: { id: requestId, status: { in: ["DISPATCHED", "PENDING"] } },
+    data: { status: "COMPLETED" },
+  });
+
+  return {
+    tranId: validationRes.tran_id,
+    amount: validationRes.amount,
+    cardType: validationRes.card_type,
     status: payment.status,
     payment,
   };

@@ -191,13 +191,18 @@ Driver ──< Dispatch
 
 ### Payments (`/api/v1/payments`)
 
-| Method | Endpoint           | Auth          | Description                              |
-| ------ | ------------------ | ------------- | ---------------------------------------- |
-| `POST` | `/stripe/checkout` | PATIENT       | Create Stripe checkout session           |
-| `POST` | `/bkash/create`    | PATIENT       | Create bKash payment URL (Tokenized PGW) |
-| `POST` | `/bkash/execute`   | PATIENT       | Execute & capture bKash payment          |
-| `GET`  | `/:requestId`      | PATIENT/ADMIN | Get payment status                       |
-| `POST` | `/stripe/webhook`  | Stripe Signed | Handle Stripe payment events             |
+| Method | Endpoint                 | Auth          | Description                              |
+| ------ | ------------------------ | ------------- | ---------------------------------------- |
+| `POST` | `/stripe/checkout`       | PATIENT       | Create Stripe checkout session           |
+| `POST` | `/stripe/webhook`        | Stripe Signed | Handle Stripe payment events             |
+| `POST` | `/bkash/create`          | PATIENT       | Create bKash payment URL (Tokenized PGW) |
+| `POST` | `/bkash/execute`         | PATIENT       | Execute & capture bKash payment          |
+| `POST` | `/sslcommerz/initiate`   | PATIENT       | Initialize SSLCommerz hosted session     |
+| `POST` | `/sslcommerz/success`    | Public        | SSLCommerz success return & validation   |
+| `POST` | `/sslcommerz/fail`       | Public        | SSLCommerz fail return                   |
+| `POST` | `/sslcommerz/cancel`     | Public        | SSLCommerz cancellation return           |
+| `POST` | `/sslcommerz/ipn`        | Public        | SSLCommerz IPN background validation     |
+| `GET`  | `/:requestId`            | PATIENT/ADMIN | Get payment status                       |
 
 ### Admin (`/api/v1/admin`)
 

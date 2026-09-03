@@ -7,6 +7,7 @@ import {
   createBkashCheckoutSchema,
   createCheckoutSchema,
   executeBkashSchema,
+  initSSLCommerzSchema,
 } from "./payment.validator";
 
 const router = Router();
@@ -44,6 +45,27 @@ router.post(
   validate(executeBkashSchema),
   paymentController.executeBkash,
 );
+
+// POST /api/v1/payments/sslcommerz/initiate — Patient initializes SSLCommerz payment
+router.post(
+  "/sslcommerz/initiate",
+  authenticate,
+  authorize("PATIENT"),
+  validate(initSSLCommerzSchema),
+  paymentController.initSSLCommerz,
+);
+
+// POST /api/v1/payments/sslcommerz/success — SSLCommerz browser return (success)
+router.post("/sslcommerz/success", paymentController.sslcommerzSuccess);
+
+// POST /api/v1/payments/sslcommerz/fail — SSLCommerz browser return (fail)
+router.post("/sslcommerz/fail", paymentController.sslcommerzFail);
+
+// POST /api/v1/payments/sslcommerz/cancel — SSLCommerz browser return (cancel)
+router.post("/sslcommerz/cancel", paymentController.sslcommerzCancel);
+
+// POST /api/v1/payments/sslcommerz/ipn — SSLCommerz IPN webhook
+router.post("/sslcommerz/ipn", paymentController.sslcommerzIPN);
 
 // GET /api/v1/payments/:requestId — Patient or Admin views payment status
 router.get(

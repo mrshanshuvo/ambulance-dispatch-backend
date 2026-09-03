@@ -130,4 +130,59 @@ describe("Payment Integration Tests (Stripe & bKash)", () => {
       expect(reqCheck?.status).toBe("COMPLETED");
     });
   });
+
+  describe("SSLCommerz Gateway Integration", () => {
+    let sslRequestId = "";
+
+    it("Setup: Create dispatched request for SSLCommerz", async () => {
+      const user = await prisma.user.findFirst({
+        where: { email: `pay_patient_${timestamp}@example.com` },
+      });
+      const req = await prisma.emergencyRequest.create({
+        data: {
+          callerId: user!.id,
+          pickupAddress: "Uttara Sector 7, Dhaka",
+          priority: "HIGH",
+          status: "DISPATCHED",
+        },
+      });
+      sslRequestId = req.id;
+    });
+
+    it("POST /api/v1/payments/sslcommerz/initiate should generate hosted gateway URL", async () => {
+      const res = await request(app)
+        .post("/api/v1/payments/sslcommerz/initiate")
+        .set("Authorization", `Bearer ${patientToken}`)
+        .send({
+          requestId: sslRequestId,
+          amount: 2200,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.gatewayPageURL).toBeDefined();
+      expect(res.body.data.sessionkey).toBeDefined();
+      expect(res.body.data.payment.gateway).toBe("SSLCOMMERZ");
+      expect(res.body.data.payment.status).toBe("PENDING");
+    });
+
+    it("POST /api/v1/payments/sslcommerz/success should validate payment and mark completed", async () => {
+      const res = await request(app)
+        .post(`/api/v1/payments/sslcommerz/success?requestId=${sslRequestId}`)
+        .send({
+          val_id: "VALIDATION_MOCK_123456",
+          status: "VALID",
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.tranId).toBeDefined();
+      expect(res.body.data.status).toBe("SUCCESS");
+
+      const reqCheck = await prisma.emergencyRequest.findUnique({
+        where: { id: sslRequestId },
+      });
+      expect(reqCheck?.status).toBe("COMPLETED");
+    });
+  });
 });
