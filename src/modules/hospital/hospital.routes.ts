@@ -41,7 +41,7 @@ router.post(
   validate(createHospitalSchema),
   asyncHandler(async (req, res) => {
     const hospital = await hospitalService.createHospital(req.body);
-    await logAudit(req.user!.userId, "CREATE", "Hospital", hospital.id);
+    await logAudit(req.user?.userId, "CREATE", "Hospital", hospital.id);
     sendSuccess(res, "Hospital created successfully", hospital, 201);
   }),
 );
@@ -58,7 +58,7 @@ router.patch(
       req.body,
     );
     await logAudit(
-      req.user!.userId,
+      req.user?.userId,
       "UPDATE",
       "Hospital",
       hospital.id,
@@ -75,7 +75,7 @@ router.delete(
   authorize("ADMIN"),
   asyncHandler(async (req, res) => {
     await hospitalService.softDeleteHospital(req.params.id);
-    await logAudit(req.user!.userId, "DELETE", "Hospital", req.params.id);
+    await logAudit(req.user?.userId, "DELETE", "Hospital", req.params.id);
     sendSuccess(res, "Hospital deleted successfully", null);
   }),
 );

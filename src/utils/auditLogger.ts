@@ -2,12 +2,13 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../config/db";
 
 export const logAudit = async (
-  actorId: string,
+  actorId: string | undefined,
   action: string,
   entityType: string,
   entityId: string,
   metadata?: Record<string, unknown>,
 ) => {
+  if (!actorId) return;
   try {
     await prisma.auditLog.create({
       data: {

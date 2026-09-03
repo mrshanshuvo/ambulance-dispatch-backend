@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/rbac.middleware";
 import { validate } from "../../middlewares/validate.middleware";
+import { AppError } from "../../utils/AppError";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { logAudit } from "../../utils/auditLogger";
 import { sendSuccess } from "../../utils/response";
@@ -22,7 +23,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const dispatch = await dispatchService.createDispatch(req.body);
     await logAudit(
-      req.user!.userId,
+      req.user?.userId,
       "DISPATCH",
       "Dispatch",
       dispatch.id,
@@ -50,13 +51,14 @@ router.patch(
   authorize("DRIVER", "ADMIN"),
   validate(updateDispatchStatusSchema),
   asyncHandler(async (req, res) => {
+    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
     const dispatch = await dispatchService.updateDispatchStatus(
       req.params.id,
       req.body,
-      req.user!.userId,
+      req.user.userId,
     );
     await logAudit(
-      req.user!.userId,
+      req.user.userId,
       "STATUS_UPDATE",
       "Dispatch",
       dispatch.id,

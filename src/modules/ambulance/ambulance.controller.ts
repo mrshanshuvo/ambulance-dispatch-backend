@@ -6,7 +6,7 @@ import * as ambulanceService from "./ambulance.service";
 
 export const create = asyncHandler(async (req: Request, res: Response) => {
   const ambulance = await ambulanceService.createAmbulance(req.body);
-  await logAudit(req.user!.userId, "CREATE", "Ambulance", ambulance.id);
+  await logAudit(req.user?.userId, "CREATE", "Ambulance", ambulance.id);
   sendSuccess(res, "Ambulance created successfully", ambulance, 201);
 });
 
@@ -26,7 +26,7 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
     req.body,
   );
   await logAudit(
-    req.user!.userId,
+    req.user?.userId,
     "UPDATE",
     "Ambulance",
     ambulance.id,
@@ -37,6 +37,6 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
 
 export const remove = asyncHandler(async (req: Request, res: Response) => {
   await ambulanceService.softDeleteAmbulance(req.params.id);
-  await logAudit(req.user!.userId, "DELETE", "Ambulance", req.params.id);
+  await logAudit(req.user?.userId, "DELETE", "Ambulance", req.params.id);
   sendSuccess(res, "Ambulance deleted successfully", null);
 });

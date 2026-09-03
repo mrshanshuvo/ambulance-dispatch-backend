@@ -43,10 +43,7 @@ export const getHospitalById = async (id: string) => {
   return hospital;
 };
 
-export const updateHospital = async (
-  id: string,
-  data: UpdateHospitalInput,
-) => {
+export const updateHospital = async (id: string, data: UpdateHospitalInput) => {
   await getHospitalById(id);
   return prisma.hospital.update({ where: { id }, data });
 };

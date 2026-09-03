@@ -30,9 +30,5 @@ export const listHospitalSchema = z.object({
   }),
 });
 
-export type CreateHospitalInput = z.infer<
-  typeof createHospitalSchema
->["body"];
-export type UpdateHospitalInput = z.infer<
-  typeof updateHospitalSchema
->["body"];
+export type CreateHospitalInput = z.infer<typeof createHospitalSchema>["body"];
+export type UpdateHospitalInput = z.infer<typeof updateHospitalSchema>["body"];

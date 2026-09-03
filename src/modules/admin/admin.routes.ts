@@ -70,7 +70,7 @@ router.patch(
       data: { role },
       select: { id: true, name: true, email: true, role: true },
     });
-    await logAudit(req.user!.userId, "UPDATE_ROLE", "User", user.id, {
+    await logAudit(req.user?.userId, "UPDATE_ROLE", "User", user.id, {
       newRole: role,
     });
     sendSuccess(res, "User role updated successfully", user);
@@ -81,14 +81,14 @@ router.patch(
 router.delete(
   "/users/:id",
   asyncHandler(async (req, res) => {
-    if (req.params.id === req.user!.userId) {
+    if (req.params.id === req.user?.userId) {
       throw new AppError("You cannot delete your own account", 400);
     }
     await prisma.user.update({
       where: { id: req.params.id },
       data: { deletedAt: new Date(), isActive: false },
     });
-    await logAudit(req.user!.userId, "DELETE", "User", req.params.id);
+    await logAudit(req.user?.userId, "DELETE", "User", req.params.id);
     sendSuccess(res, "User deleted successfully", null);
   }),
 );

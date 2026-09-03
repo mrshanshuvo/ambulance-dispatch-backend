@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/rbac.middleware";
 import { validate } from "../../middlewares/validate.middleware";
+import { AppError } from "../../utils/AppError";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { logAudit } from "../../utils/auditLogger";
 import { sendSuccess } from "../../utils/response";
@@ -16,7 +17,8 @@ router.get(
   authenticate,
   authorize("DRIVER"),
   asyncHandler(async (req, res) => {
-    const driver = await driverService.getMyDriverProfile(req.user!.userId);
+    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
+    const driver = await driverService.getMyDriverProfile(req.user.userId);
     sendSuccess(res, "Driver profile fetched", driver);
   }),
 );
@@ -51,7 +53,7 @@ router.post(
   validate(createDriverSchema),
   asyncHandler(async (req, res) => {
     const driver = await driverService.createDriver(req.body);
-    await logAudit(req.user!.userId, "CREATE", "Driver", driver.id);
+    await logAudit(req.user?.userId, "CREATE", "Driver", driver.id);
     sendSuccess(res, "Driver registered successfully", driver, 201);
   }),
 );
@@ -64,7 +66,7 @@ router.patch(
   validate(updateDriverSchema),
   asyncHandler(async (req, res) => {
     const driver = await driverService.updateDriver(req.params.id, req.body);
-    await logAudit(req.user!.userId, "UPDATE", "Driver", driver.id, req.body);
+    await logAudit(req.user?.userId, "UPDATE", "Driver", driver.id, req.body);
     sendSuccess(res, "Driver updated successfully", driver);
   }),
 );
@@ -76,7 +78,7 @@ router.delete(
   authorize("ADMIN"),
   asyncHandler(async (req, res) => {
     await driverService.softDeleteDriver(req.params.id);
-    await logAudit(req.user!.userId, "DELETE", "Driver", req.params.id);
+    await logAudit(req.user?.userId, "DELETE", "Driver", req.params.id);
     sendSuccess(res, "Driver deleted successfully", null);
   }),
 );
