@@ -41,156 +41,171 @@
       "name": "01. Auth Module",
       "item": [
         {
-          "name": "Register User (Patient)",
-          "event": [
+          "name": "01.1 Email & Password Auth",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.accessToken) {",
-                  "        pm.environment.set('accessToken', jsonData.data.accessToken);",
-                  "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+8801712345678\",\n  \"address\": \"Dhanmondi, Dhaka\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
-            },
-            "description": "Registers a new patient and returns JWT tokens."
-          }
-        },
-        {
-          "name": "Login User (Admin / Driver / Patient)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.accessToken) {",
-                  "        pm.environment.set('accessToken', jsonData.data.accessToken);",
-                  "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@ambulance.dev\",\n  \"password\": \"Admin@123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "Logs in user with email & password and sets access/refresh tokens in Postman variables."
-          }
-        },
-        {
-          "name": "Refresh Access Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.accessToken) {",
-                  "        pm.environment.set('accessToken', jsonData.data.accessToken);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/refresh-token",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh-token"]
-            },
-            "description": "Generates a fresh access token using the refresh token."
-          }
-        },
-        {
-          "name": "Logout User",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+              "name": "Register User (Patient)",
+              "event": [
                 {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.accessToken) {",
+                      "        pm.environment.set('accessToken', jsonData.data.accessToken);",
+                      "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
                 }
-              ]
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+8801712345678\",\n  \"address\": \"Dhanmondi, Dhaka\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                },
+                "description": "Registers a new patient and returns JWT tokens."
+              }
             },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
-            },
-            "description": "Logs out authenticated user."
-          }
+            {
+              "name": "Login User (Admin / Driver / Patient)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.accessToken) {",
+                      "        pm.environment.set('accessToken', jsonData.data.accessToken);",
+                      "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@ambulance.dev\",\n  \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                },
+                "description": "Logs in user with email & password and sets access/refresh tokens in Postman variables."
+              }
+            }
+          ]
         },
         {
-          "name": "Google OAuth (Browser redirect)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/google",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "google"]
+          "name": "01.2 Token Management",
+          "item": [
+            {
+              "name": "Refresh Access Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.accessToken) {",
+                      "        pm.environment.set('accessToken', jsonData.data.accessToken);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/refresh-token",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "refresh-token"]
+                },
+                "description": "Generates a fresh access token using the refresh token."
+              }
             },
-            "description": "Initiates Google OAuth2 consent flow (open in browser)."
-          }
+            {
+              "name": "Logout User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "logout"]
+                },
+                "description": "Logs out authenticated user."
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.3 Social Authentication",
+          "item": [
+            {
+              "name": "Google OAuth (Browser redirect)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/google",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "google"]
+                },
+                "description": "Initiates Google OAuth2 consent flow (open in browser)."
+              }
+            }
+          ]
         }
       ]
     },
@@ -291,107 +306,117 @@
       "name": "03. Ambulance Module",
       "item": [
         {
-          "name": "List Ambulances (Public with Filters)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ambulances?page=1&limit=10&status=AVAILABLE",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ambulances"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "status", "value": "AVAILABLE" }
-              ]
-            },
-            "description": "List all ambulances with pagination and status/type filter."
-          }
-        },
-        {
-          "name": "Get Ambulance By ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
-            },
-            "description": "Get single ambulance details."
-          }
-        },
-        {
-          "name": "Create Ambulance (ADMIN)",
-          "event": [
+          "name": "03.1 Public Directory",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.id) {",
-                  "        pm.environment.set('ambulanceId', jsonData.data.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
+              "name": "List Ambulances (Public with Filters)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ambulances?page=1&limit=10&status=AVAILABLE",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ambulances"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "status", "value": "AVAILABLE" }
+                  ]
+                },
+                "description": "List all ambulances with pagination and status/type filter."
+              }
+            },
+            {
+              "name": "Get Ambulance By ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
+                },
+                "description": "Get single ambulance details."
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"vehicleNumber\": \"DHAKA-METRO-EM-9999\",\n  \"type\": \"ADVANCED_LIFE_SUPPORT\",\n  \"make\": \"Toyota HiAce\",\n  \"year\": 2024\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ambulances",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ambulances"]
-            }
-          }
+          ]
         },
         {
-          "name": "Update Ambulance (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+          "name": "03.2 Admin Management",
+          "item": [
+            {
+              "name": "Create Ambulance (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.id) {",
+                      "        pm.environment.set('ambulanceId', jsonData.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vehicleNumber\": \"DHAKA-METRO-EM-9999\",\n  \"type\": \"ADVANCED_LIFE_SUPPORT\",\n  \"make\": \"Toyota HiAce\",\n  \"year\": 2024\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ambulances",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ambulances"]
+                }
+              }
             },
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"MAINTENANCE\"\n}"
+            {
+              "name": "Update Ambulance (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"MAINTENANCE\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
+                }
+              }
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
+            {
+              "name": "Delete Ambulance (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
+                }
+              }
             }
-          }
-        },
-        {
-          "name": "Delete Ambulance (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
-            }
-          }
+          ]
         }
       ]
     },
@@ -399,129 +424,139 @@
       "name": "04. Driver Module",
       "item": [
         {
-          "name": "Get My Driver Profile (DRIVER)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/drivers/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "drivers", "me"]
-            }
-          }
-        },
-        {
-          "name": "List Drivers (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/drivers?page=1&limit=10&isAvailable=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "drivers"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "isAvailable", "value": "true" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Driver By ID (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "drivers", "{{driverId}}"]
-            }
-          }
-        },
-        {
-          "name": "Register Driver (ADMIN)",
-          "event": [
+          "name": "04.1 Driver Profile",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.id) {",
-                  "        pm.environment.set('driverId', jsonData.data.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
+              "name": "Get My Driver Profile (DRIVER)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/drivers/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "drivers", "me"]
+                }
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{targetUserId}}\",\n  \"licenseNumber\": \"DL-BD-2026-9999\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/drivers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "drivers"]
-            }
-          }
+          ]
         },
         {
-          "name": "Update Driver (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+          "name": "04.2 Admin Management",
+          "item": [
+            {
+              "name": "List Drivers (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/drivers?page=1&limit=10&isAvailable=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "drivers"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "isAvailable", "value": "true" }
+                  ]
+                }
+              }
             },
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"isAvailable\": true\n}"
+            {
+              "name": "Get Driver By ID (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "drivers", "{{driverId}}"]
+                }
+              }
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "drivers", "{{driverId}}"]
+            {
+              "name": "Register Driver (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.id) {",
+                      "        pm.environment.set('driverId', jsonData.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{targetUserId}}\",\n  \"licenseNumber\": \"DL-BD-2026-9999\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/drivers",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "drivers"]
+                }
+              }
+            },
+            {
+              "name": "Update Driver (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isAvailable\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "drivers", "{{driverId}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Driver (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "drivers", "{{driverId}}"]
+                }
+              }
             }
-          }
-        },
-        {
-          "name": "Delete Driver (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "drivers", "{{driverId}}"]
-            }
-          }
+          ]
         }
       ]
     },
@@ -529,105 +564,115 @@
       "name": "05. Hospital Module",
       "item": [
         {
-          "name": "List Hospitals (Public with Name Search)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/hospitals?page=1&limit=10&name=dhaka",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "hospitals"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "name", "value": "dhaka" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Hospital By ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/hospitals/{{hospitalId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "hospitals", "{{hospitalId}}"]
-            }
-          }
-        },
-        {
-          "name": "Create Hospital (ADMIN)",
-          "event": [
+          "name": "05.1 Public Directory",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.id) {",
-                  "        pm.environment.set('hospitalId', jsonData.data.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
+              "name": "List Hospitals (Public with Name Search)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/hospitals?page=1&limit=10&name=dhaka",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "hospitals"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "name", "value": "dhaka" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Hospital By ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/hospitals/{{hospitalId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "hospitals", "{{hospitalId}}"]
+                }
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Apollo Specialized Hospital\",\n  \"address\": \"Plot 81, Block E, Bashundhara R/A, Dhaka\",\n  \"phone\": \"+8801811223344\",\n  \"capacity\": 60\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/hospitals",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "hospitals"]
-            }
-          }
+          ]
         },
         {
-          "name": "Update Hospital (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+          "name": "05.2 Admin Management",
+          "item": [
+            {
+              "name": "Create Hospital (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.id) {",
+                      "        pm.environment.set('hospitalId', jsonData.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Apollo Specialized Hospital\",\n  \"address\": \"Plot 81, Block E, Bashundhara R/A, Dhaka\",\n  \"phone\": \"+8801811223344\",\n  \"capacity\": 60\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/hospitals",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "hospitals"]
+                }
+              }
             },
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"capacity\": 75\n}"
+            {
+              "name": "Update Hospital (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"capacity\": 75\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/hospitals/{{hospitalId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "hospitals", "{{hospitalId}}"]
+                }
+              }
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/hospitals/{{hospitalId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "hospitals", "{{hospitalId}}"]
+            {
+              "name": "Delete Hospital (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/hospitals/{{hospitalId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "hospitals", "{{hospitalId}}"]
+                }
+              }
             }
-          }
-        },
-        {
-          "name": "Delete Hospital (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/hospitals/{{hospitalId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "hospitals", "{{hospitalId}}"]
-            }
-          }
+          ]
         }
       ]
     },
@@ -635,113 +680,123 @@
       "name": "06. Emergency Request Module",
       "item": [
         {
-          "name": "Create Emergency Request (PATIENT)",
-          "event": [
+          "name": "06.1 Patient Operations",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.id) {",
-                  "        pm.environment.set('requestId', jsonData.data.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
+              "name": "Create Emergency Request (PATIENT)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.id) {",
+                      "        pm.environment.set('requestId', jsonData.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"priority\": \"CRITICAL\",\n  \"pickupAddress\": \"House 45, Road 27, Dhanmondi, Dhaka\",\n  \"pickupLat\": 23.7465,\n  \"pickupLng\": 90.3758,\n  \"description\": \"Severe cardiac pain, immediate life support needed\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/requests",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "requests"]
+                }
+              }
+            },
+            {
+              "name": "Get My Requests (PATIENT)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/requests/my?page=1&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "requests", "my"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Request By ID (Auth)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "requests", "{{requestId}}"]
+                }
+              }
+            },
+            {
+              "name": "Cancel Request (PATIENT / ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}/cancel",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "requests", "{{requestId}}", "cancel"]
+                }
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"priority\": \"CRITICAL\",\n  \"pickupAddress\": \"House 45, Road 27, Dhanmondi, Dhaka\",\n  \"pickupLat\": 23.7465,\n  \"pickupLng\": 90.3758,\n  \"description\": \"Severe cardiac pain, immediate life support needed\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/requests",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "requests"]
-            }
-          }
+          ]
         },
         {
-          "name": "Get My Requests (PATIENT)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/requests/my?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "requests", "my"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
-              ]
+          "name": "06.2 Admin Oversight",
+          "item": [
+            {
+              "name": "List All Requests (ADMIN with Filters)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/requests?page=1&limit=10&status=PENDING",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "requests"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "status", "value": "PENDING" }
+                  ]
+                }
+              }
             }
-          }
-        },
-        {
-          "name": "List All Requests (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/requests?page=1&limit=10&status=PENDING",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "requests"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "status", "value": "PENDING" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Request By ID (Auth)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "requests", "{{requestId}}"]
-            }
-          }
-        },
-        {
-          "name": "Cancel Request (PATIENT / ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "PATCH",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "requests", "{{requestId}}", "cancel"]
-            }
-          }
+          ]
         }
       ]
     },
@@ -749,96 +804,106 @@
       "name": "07. Dispatch Module",
       "item": [
         {
-          "name": "Create Dispatch (ADMIN)",
-          "event": [
+          "name": "07.1 Dispatch Creation & Details",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data && jsonData.data.id) {",
-                  "        pm.environment.set('dispatchId', jsonData.data.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
+              "name": "Create Dispatch (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.id) {",
+                      "        pm.environment.set('dispatchId', jsonData.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"ambulanceId\": \"{{ambulanceId}}\",\n  \"driverId\": \"{{driverId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches"]
+                }
+              }
+            },
+            {
+              "name": "Get Dispatch By ID (ADMIN / DRIVER)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "{{dispatchId}}"]
+                }
               }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"ambulanceId\": \"{{ambulanceId}}\",\n  \"driverId\": \"{{driverId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/dispatches",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "dispatches"]
-            }
-          }
+          ]
         },
         {
-          "name": "Get Dispatch By ID (ADMIN / DRIVER)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+          "name": "07.2 Trip Status Transitions",
+          "item": [
+            {
+              "name": "Update Dispatch Status (DRIVER / ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"EN_ROUTE\",\n  \"note\": \"Driver has departed to pickup location\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
+                }
+              }
             },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "dispatches", "{{dispatchId}}"]
+            {
+              "name": "Complete Dispatch (DRIVER / ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Patient delivered safely to emergency room\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
+                }
+              }
             }
-          }
-        },
-        {
-          "name": "Update Dispatch Status (DRIVER / ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"EN_ROUTE\",\n  \"note\": \"Driver has departed to pickup location\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
-            }
-          }
-        },
-        {
-          "name": "Complete Dispatch (DRIVER / ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Patient delivered safely to emergency room\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
-            }
-          }
+          ]
         }
       ]
     },
@@ -846,98 +911,108 @@
       "name": "08. Admin Module",
       "item": [
         {
-          "name": "List Users (ADMIN with Search/Filter)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+          "name": "08.1 User Administration",
+          "item": [
+            {
+              "name": "List Users (ADMIN with Search/Filter)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users?page=1&limit=10&role=PATIENT",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "users"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "role", "value": "PATIENT" }
+                  ]
+                }
+              }
             },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users?page=1&limit=10&role=PATIENT",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "role", "value": "PATIENT" }
-              ]
+            {
+              "name": "Update User Role (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"DRIVER\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}/role",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "users", "{{targetUserId}}", "role"]
+                }
+              }
+            },
+            {
+              "name": "Soft Delete User (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "users", "{{targetUserId}}"]
+                }
+              }
             }
-          }
+          ]
         },
         {
-          "name": "Update User Role (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+          "name": "08.2 System Analytics & Auditing",
+          "item": [
+            {
+              "name": "View Audit Logs (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/audit-logs?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "audit-logs"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              }
             },
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"role\": \"DRIVER\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}/role",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users", "{{targetUserId}}", "role"]
+            {
+              "name": "Get Dashboard Statistics (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/stats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "stats"]
+                },
+                "description": "Returns system metrics: total users, drivers, ambulance availability breakdown, emergency request status counts, and total revenue."
+              }
             }
-          }
-        },
-        {
-          "name": "Soft Delete User (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "users", "{{targetUserId}}"]
-            }
-          }
-        },
-        {
-          "name": "View Audit Logs (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/audit-logs?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "audit-logs"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Dashboard Statistics (ADMIN)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "stats"]
-            },
-            "description": "Returns system metrics: total users, drivers, ambulance availability breakdown, emergency request status counts, and total revenue."
-          }
+          ]
         }
       ]
     },
