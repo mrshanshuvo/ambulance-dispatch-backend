@@ -359,15 +359,15 @@ PATIENT  →  POST /payments/bkash/execute  →  Payment captured (trxID recorde
 
 ### 🧪 bKash Sandbox Test Credentials & Wallets
 
-| Key | Sandbox Test Value |
-| :--- | :--- |
-| **API Version** | `v1.2.0-beta` (Tokenized Checkout) |
-| **Base URL** | `https://tokenized.sandbox.bka.sh/v1.2.0-beta` |
-| **Active Wallets (Success)** | `01770618575`, `01929918378`, `01770618576`, `01877722345` |
-| **Wallet (Insufficient Balance)** | `01823074817` |
-| **Wallet (Debit Block)** | `01823074818` |
-| **OTP** | `123456` |
-| **PIN** | `12121` |
+| Key                               | Sandbox Test Value                                         |
+| :-------------------------------- | :--------------------------------------------------------- |
+| **API Version**                   | `v1.2.0-beta` (Tokenized Checkout)                         |
+| **Base URL**                      | `https://tokenized.sandbox.bka.sh/v1.2.0-beta`             |
+| **Active Wallets (Success)**      | `01770618575`, `01929918378`, `01770618576`, `01877722345` |
+| **Wallet (Insufficient Balance)** | `01823074817`                                              |
+| **Wallet (Debit Block)**          | `01823074818`                                              |
+| **OTP**                           | `123456`                                                   |
+| **PIN**                           | `12121`                                                    |
 
 ---
 
