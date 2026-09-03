@@ -5,6 +5,7 @@
 ---
 
 ## ✅ Day 1 & Day 2 Completed (Foundation + Auth)
+
 - [x] Project setup, TypeScript + Express + Biome + Prisma 7.10
 - [x] 9-entity Prisma schema migrated to Neon PostgreSQL
 - [x] JWT Auth (Register/Login/Refresh/Logout), Google OAuth 2.0 working
@@ -16,15 +17,15 @@
 
 ## 📋 Day 3 Deliverables
 
-| Module | APIs | Roles |
-| :----- | :--- | :---- |
-| **Ambulance** | `POST /ambulances`, `GET /ambulances`, `GET /ambulances/:id`, `PATCH /ambulances/:id`, `DELETE /ambulances/:id` | ADMIN |
-| **Driver** | `POST /drivers`, `GET /drivers`, `GET /drivers/me`, `PATCH /drivers/:id`, `DELETE /drivers/:id` | ADMIN, DRIVER |
-| **Hospital** | `POST /hospitals`, `GET /hospitals`, `GET /hospitals/:id`, `PATCH /hospitals/:id`, `DELETE /hospitals/:id` | ADMIN, Public |
-| **Emergency Request** | `POST /requests`, `GET /requests`, `GET /requests/:id`, `PATCH /requests/:id/cancel`, `GET /requests/my` | ALL ROLES |
-| **Dispatch** | `POST /dispatches`, `GET /dispatches/:id`, `PATCH /dispatches/:id/status` | ADMIN, DRIVER |
-| **Audit** | `GET /admin/audit-logs` | ADMIN |
-| **Admin Users** | `GET /admin/users`, `PATCH /admin/users/:id/role`, `DELETE /admin/users/:id` | ADMIN |
+| Module                | APIs                                                                                                            | Roles         |
+| :-------------------- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| **Ambulance**         | `POST /ambulances`, `GET /ambulances`, `GET /ambulances/:id`, `PATCH /ambulances/:id`, `DELETE /ambulances/:id` | ADMIN         |
+| **Driver**            | `POST /drivers`, `GET /drivers`, `GET /drivers/me`, `PATCH /drivers/:id`, `DELETE /drivers/:id`                 | ADMIN, DRIVER |
+| **Hospital**          | `POST /hospitals`, `GET /hospitals`, `GET /hospitals/:id`, `PATCH /hospitals/:id`, `DELETE /hospitals/:id`      | ADMIN, Public |
+| **Emergency Request** | `POST /requests`, `GET /requests`, `GET /requests/:id`, `PATCH /requests/:id/cancel`, `GET /requests/my`        | ALL ROLES     |
+| **Dispatch**          | `POST /dispatches`, `GET /dispatches/:id`, `PATCH /dispatches/:id/status`                                       | ADMIN, DRIVER |
+| **Audit**             | `GET /admin/audit-logs`                                                                                         | ADMIN         |
+| **Admin Users**       | `GET /admin/users`, `PATCH /admin/users/:id/role`, `DELETE /admin/users/:id`                                    | ADMIN         |
 
 **Total:** 23 new APIs (easily exceeds the 20+ requirement) ✅
 
@@ -40,6 +41,7 @@ npm install -D @types/multer
 > We install these now so the file upload infra is ready even if Cloudinary upload only gets wired in Day 4/5.
 
 **📝 Commit #15:**
+
 ```
 chore: install multer and cloudinary for file upload infrastructure
 ```
@@ -98,6 +100,7 @@ export const logAudit = async (
 ```
 
 **📝 Commit #16:**
+
 ```
 feat(utils): add pagination helpers and audit logger utility
 ```
@@ -123,8 +126,12 @@ export const createAmbulanceSchema = z.object({
 export const updateAmbulanceSchema = z.object({
   body: z.object({
     vehicleNumber: z.string().optional(),
-    type: z.enum(["BASIC", "ADVANCED_LIFE_SUPPORT", "INTENSIVE_CARE"]).optional(),
-    status: z.enum(["AVAILABLE", "DISPATCHED", "MAINTENANCE", "RETIRED"]).optional(),
+    type: z
+      .enum(["BASIC", "ADVANCED_LIFE_SUPPORT", "INTENSIVE_CARE"])
+      .optional(),
+    status: z
+      .enum(["AVAILABLE", "DISPATCHED", "MAINTENANCE", "RETIRED"])
+      .optional(),
     make: z.string().optional(),
     year: z.number().int().optional(),
   }),
@@ -132,15 +139,23 @@ export const updateAmbulanceSchema = z.object({
 
 export const listAmbulanceSchema = z.object({
   query: z.object({
-    status: z.enum(["AVAILABLE", "DISPATCHED", "MAINTENANCE", "RETIRED"]).optional(),
-    type: z.enum(["BASIC", "ADVANCED_LIFE_SUPPORT", "INTENSIVE_CARE"]).optional(),
+    status: z
+      .enum(["AVAILABLE", "DISPATCHED", "MAINTENANCE", "RETIRED"])
+      .optional(),
+    type: z
+      .enum(["BASIC", "ADVANCED_LIFE_SUPPORT", "INTENSIVE_CARE"])
+      .optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
   }),
 });
 
-export type CreateAmbulanceInput = z.infer<typeof createAmbulanceSchema>["body"];
-export type UpdateAmbulanceInput = z.infer<typeof updateAmbulanceSchema>["body"];
+export type CreateAmbulanceInput = z.infer<
+  typeof createAmbulanceSchema
+>["body"];
+export type UpdateAmbulanceInput = z.infer<
+  typeof updateAmbulanceSchema
+>["body"];
 ```
 
 ### `src/modules/ambulance/ambulance.service.ts`
@@ -150,7 +165,10 @@ import { prisma } from "../../config/db";
 import { AppError } from "../../utils/AppError";
 import { buildMeta, getPagination } from "../../utils/pagination";
 import type { Request } from "express";
-import type { CreateAmbulanceInput, UpdateAmbulanceInput } from "./ambulance.validator";
+import type {
+  CreateAmbulanceInput,
+  UpdateAmbulanceInput,
+} from "./ambulance.validator";
 
 export const createAmbulance = async (data: CreateAmbulanceInput) => {
   const existing = await prisma.ambulance.findUnique({
@@ -177,7 +195,9 @@ export const listAmbulances = async (req: Request) => {
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
-      include: { driver: { include: { user: { select: { name: true, phone: true } } } } },
+      include: {
+        driver: { include: { user: { select: { name: true, phone: true } } } },
+      },
     }),
     prisma.ambulance.count({ where }),
   ]);
@@ -188,13 +208,20 @@ export const listAmbulances = async (req: Request) => {
 export const getAmbulanceById = async (id: string) => {
   const ambulance = await prisma.ambulance.findFirst({
     where: { id, deletedAt: null },
-    include: { driver: { include: { user: { select: { name: true, email: true, phone: true } } } } },
+    include: {
+      driver: {
+        include: { user: { select: { name: true, email: true, phone: true } } },
+      },
+    },
   });
   if (!ambulance) throw new AppError("Ambulance not found", 404);
   return ambulance;
 };
 
-export const updateAmbulance = async (id: string, data: UpdateAmbulanceInput) => {
+export const updateAmbulance = async (
+  id: string,
+  data: UpdateAmbulanceInput,
+) => {
   await getAmbulanceById(id); // Validate existence
   return prisma.ambulance.update({ where: { id }, data });
 };
@@ -234,8 +261,17 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const update = asyncHandler(async (req: Request, res: Response) => {
-  const ambulance = await ambulanceService.updateAmbulance(req.params.id, req.body);
-  await logAudit(req.user!.userId, "UPDATE", "Ambulance", ambulance.id, req.body);
+  const ambulance = await ambulanceService.updateAmbulance(
+    req.params.id,
+    req.body,
+  );
+  await logAudit(
+    req.user!.userId,
+    "UPDATE",
+    "Ambulance",
+    ambulance.id,
+    req.body,
+  );
   sendSuccess(res, "Ambulance updated successfully", ambulance);
 });
 
@@ -269,10 +305,22 @@ router.get("/", validate(listAmbulanceSchema), ctrl.list);
 router.get("/:id", ctrl.getById);
 
 // POST /api/v1/ambulances — ADMIN only
-router.post("/", authenticate, authorize("ADMIN"), validate(createAmbulanceSchema), ctrl.create);
+router.post(
+  "/",
+  authenticate,
+  authorize("ADMIN"),
+  validate(createAmbulanceSchema),
+  ctrl.create,
+);
 
 // PATCH /api/v1/ambulances/:id — ADMIN only
-router.patch("/:id", authenticate, authorize("ADMIN"), validate(updateAmbulanceSchema), ctrl.update);
+router.patch(
+  "/:id",
+  authenticate,
+  authorize("ADMIN"),
+  validate(updateAmbulanceSchema),
+  ctrl.update,
+);
 
 // DELETE /api/v1/ambulances/:id — ADMIN only
 router.delete("/:id", authenticate, authorize("ADMIN"), ctrl.remove);
@@ -281,6 +329,7 @@ export default router;
 ```
 
 **📝 Commit #17:**
+
 ```
 feat(ambulance): add full CRUD module with pagination, filtering, and soft delete
 ```
@@ -327,8 +376,11 @@ export const createDriver = async (data: CreateDriverInput) => {
   const user = await prisma.user.findUnique({ where: { id: data.userId } });
   if (!user) throw new AppError("User not found", 404);
 
-  const existing = await prisma.driver.findUnique({ where: { userId: data.userId } });
-  if (existing) throw new AppError("This user is already a registered driver", 409);
+  const existing = await prisma.driver.findUnique({
+    where: { userId: data.userId },
+  });
+  if (existing)
+    throw new AppError("This user is already a registered driver", 409);
 
   // Update user role to DRIVER
   await prisma.user.update({
@@ -341,13 +393,17 @@ export const createDriver = async (data: CreateDriverInput) => {
 
 export const listDrivers = async (req: Request) => {
   const { page, limit, skip } = getPagination(req);
-  const isAvailable = req.query.isAvailable === "true"
-    ? true
-    : req.query.isAvailable === "false"
-    ? false
-    : undefined;
+  const isAvailable =
+    req.query.isAvailable === "true"
+      ? true
+      : req.query.isAvailable === "false"
+        ? false
+        : undefined;
 
-  const where = { deletedAt: null, ...(isAvailable !== undefined && { isAvailable }) };
+  const where = {
+    deletedAt: null,
+    ...(isAvailable !== undefined && { isAvailable }),
+  };
 
   const [drivers, total] = await Promise.all([
     prisma.driver.findMany({
@@ -357,7 +413,9 @@ export const listDrivers = async (req: Request) => {
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { name: true, email: true, phone: true } },
-        ambulance: { select: { vehicleNumber: true, type: true, status: true } },
+        ambulance: {
+          select: { vehicleNumber: true, type: true, status: true },
+        },
       },
     }),
     prisma.driver.count({ where }),
@@ -397,7 +455,10 @@ export const updateDriver = async (id: string, data: UpdateDriverInput) => {
 
 export const softDeleteDriver = async (id: string) => {
   await getDriverById(id);
-  return prisma.driver.update({ where: { id }, data: { deletedAt: new Date() } });
+  return prisma.driver.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
 };
 ```
 
@@ -412,10 +473,7 @@ import * as driverService from "./driver.service";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendSuccess } from "../../utils/response";
 import { logAudit } from "../../utils/auditLogger";
-import {
-  createDriverSchema,
-  updateDriverSchema,
-} from "./driver.validator";
+import { createDriverSchema, updateDriverSchema } from "./driver.validator";
 
 const router = Router();
 
@@ -494,6 +552,7 @@ export default router;
 ```
 
 **📝 Commit #18:**
+
 ```
 feat(driver): add driver module with role promotion, availability filter, and driver profile
 ```
@@ -503,6 +562,7 @@ feat(driver): add driver module with role promotion, availability filter, and dr
 ## 🔴 Step 5 — Hospital Module
 
 Same CRUD pattern as Ambulance. Key differences:
+
 - `GET /hospitals` and `GET /hospitals/:id` are **public** (no auth needed).
 - `POST`, `PATCH`, `DELETE` are **ADMIN** only.
 - Support filtering by `?name=dhaka` (search) and pagination.
@@ -544,11 +604,14 @@ export type UpdateHospitalInput = z.infer<typeof updateHospitalSchema>["body"];
 // Search by name — use this in listHospitals service
 const where = {
   deletedAt: null,
-  ...(name && { name: { contains: name as string, mode: "insensitive" as const } }),
+  ...(name && {
+    name: { contains: name as string, mode: "insensitive" as const },
+  }),
 };
 ```
 
 **📝 Commit #19:**
+
 ```
 feat(hospital): add hospital module with public listing and name search
 ```
@@ -576,7 +639,9 @@ export const createRequestSchema = z.object({
 
 export const listRequestSchema = z.object({
   query: z.object({
-    status: z.enum(["PENDING", "DISPATCHED", "CANCELLED", "COMPLETED"]).optional(),
+    status: z
+      .enum(["PENDING", "DISPATCHED", "CANCELLED", "COMPLETED"])
+      .optional(),
     priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
@@ -595,7 +660,10 @@ import { buildMeta, getPagination } from "../../utils/pagination";
 import type { Request } from "express";
 import type { CreateRequestInput } from "./request.validator";
 
-export const createRequest = async (callerId: string, data: CreateRequestInput) => {
+export const createRequest = async (
+  callerId: string,
+  data: CreateRequestInput,
+) => {
   // Business rule: Patient cannot have 2 PENDING requests at the same time
   const activePending = await prisma.emergencyRequest.findFirst({
     where: { callerId, status: "PENDING", deletedAt: null },
@@ -611,7 +679,10 @@ export const createRequest = async (callerId: string, data: CreateRequestInput) 
 
 export const listRequests = async (req: Request) => {
   const { page, limit, skip } = getPagination(req);
-  const { status, priority } = req.query as { status?: string; priority?: string };
+  const { status, priority } = req.query as {
+    status?: string;
+    priority?: string;
+  };
 
   const where = {
     deletedAt: null,
@@ -627,7 +698,12 @@ export const listRequests = async (req: Request) => {
       orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
       include: {
         caller: { select: { name: true, phone: true } },
-        dispatch: { select: { status: true, ambulance: { select: { vehicleNumber: true } } } },
+        dispatch: {
+          select: {
+            status: true,
+            ambulance: { select: { vehicleNumber: true } },
+          },
+        },
       },
     }),
     prisma.emergencyRequest.count({ where }),
@@ -644,7 +720,9 @@ export const getRequestById = async (id: string) => {
       dispatch: {
         include: {
           ambulance: true,
-          driver: { include: { user: { select: { name: true, phone: true } } } },
+          driver: {
+            include: { user: { select: { name: true, phone: true } } },
+          },
           hospital: true,
         },
       },
@@ -664,7 +742,10 @@ export const getMyRequests = async (callerId: string, req: Request) => {
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
-      include: { dispatch: { select: { status: true } }, payment: { select: { status: true, amount: true } } },
+      include: {
+        dispatch: { select: { status: true } },
+        payment: { select: { status: true, amount: true } },
+      },
     }),
     prisma.emergencyRequest.count({ where: { callerId, deletedAt: null } }),
   ]);
@@ -672,12 +753,19 @@ export const getMyRequests = async (callerId: string, req: Request) => {
   return { requests, meta: buildMeta(page, limit, total) };
 };
 
-export const cancelRequest = async (id: string, callerId: string, role: string) => {
+export const cancelRequest = async (
+  id: string,
+  callerId: string,
+  role: string,
+) => {
   const request = await getRequestById(id);
 
   // Only the caller or ADMIN can cancel
   if (role !== "ADMIN" && request.callerId !== callerId) {
-    throw new AppError("You do not have permission to cancel this request", 403);
+    throw new AppError(
+      "You do not have permission to cancel this request",
+      403,
+    );
   }
 
   if (!["PENDING"].includes(request.status)) {
@@ -746,7 +834,10 @@ router.post(
   authorize("PATIENT"),
   validate(createRequestSchema),
   asyncHandler(async (req, res) => {
-    const request = await requestService.createRequest(req.user!.userId, req.body);
+    const request = await requestService.createRequest(
+      req.user!.userId,
+      req.body,
+    );
     await logAudit(req.user!.userId, "CREATE", "EmergencyRequest", request.id);
     sendSuccess(res, "Emergency request created successfully", request, 201);
   }),
@@ -763,7 +854,12 @@ router.patch(
       req.user!.userId,
       req.user!.role,
     );
-    await logAudit(req.user!.userId, "CANCEL", "EmergencyRequest", req.params.id);
+    await logAudit(
+      req.user!.userId,
+      "CANCEL",
+      "EmergencyRequest",
+      req.params.id,
+    );
     sendSuccess(res, "Request cancelled successfully", request);
   }),
 );
@@ -772,6 +868,7 @@ export default router;
 ```
 
 **📝 Commit #20:**
+
 ```
 feat(request): add emergency request module with business rules and patient request tracking
 ```
@@ -812,7 +909,9 @@ export const updateDispatchStatusSchema = z.object({
 });
 
 export type CreateDispatchInput = z.infer<typeof createDispatchSchema>["body"];
-export type UpdateDispatchStatusInput = z.infer<typeof updateDispatchStatusSchema>["body"];
+export type UpdateDispatchStatusInput = z.infer<
+  typeof updateDispatchStatusSchema
+>["body"];
 ```
 
 ### `src/modules/dispatch/dispatch.service.ts`
@@ -820,7 +919,10 @@ export type UpdateDispatchStatusInput = z.infer<typeof updateDispatchStatusSchem
 ```ts
 import { prisma } from "../../config/db";
 import { AppError } from "../../utils/AppError";
-import type { CreateDispatchInput, UpdateDispatchStatusInput } from "./dispatch.validator";
+import type {
+  CreateDispatchInput,
+  UpdateDispatchStatusInput,
+} from "./dispatch.validator";
 
 export const createDispatch = async (data: CreateDispatchInput) => {
   // Run all validations inside a transaction to prevent race conditions
@@ -828,7 +930,8 @@ export const createDispatch = async (data: CreateDispatchInput) => {
     const request = await tx.emergencyRequest.findFirst({
       where: { id: data.requestId, status: "PENDING" },
     });
-    if (!request) throw new AppError("Request not found or not in PENDING status", 400);
+    if (!request)
+      throw new AppError("Request not found or not in PENDING status", 400);
 
     const ambulance = await tx.ambulance.findFirst({
       where: { id: data.ambulanceId, status: "AVAILABLE" },
@@ -841,7 +944,9 @@ export const createDispatch = async (data: CreateDispatchInput) => {
     if (!driver) throw new AppError("Driver is not available", 400);
 
     // Check no existing dispatch for this request
-    const existing = await tx.dispatch.findUnique({ where: { requestId: data.requestId } });
+    const existing = await tx.dispatch.findUnique({
+      where: { requestId: data.requestId },
+    });
     if (existing) throw new AppError("This request is already dispatched", 409);
 
     // Update request status
@@ -883,7 +988,9 @@ export const getDispatchById = async (id: string) => {
   const dispatch = await prisma.dispatch.findUnique({
     where: { id },
     include: {
-      request: { select: { pickupAddress: true, priority: true, status: true } },
+      request: {
+        select: { pickupAddress: true, priority: true, status: true },
+      },
       ambulance: { select: { vehicleNumber: true, type: true } },
       driver: { include: { user: { select: { name: true, phone: true } } } },
       hospital: true,
@@ -957,7 +1064,10 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { sendSuccess } from "../../utils/response";
 import { logAudit } from "../../utils/auditLogger";
 import * as dispatchService from "./dispatch.service";
-import { createDispatchSchema, updateDispatchStatusSchema } from "./dispatch.validator";
+import {
+  createDispatchSchema,
+  updateDispatchStatusSchema,
+} from "./dispatch.validator";
 
 const router = Router();
 
@@ -969,7 +1079,13 @@ router.post(
   validate(createDispatchSchema),
   asyncHandler(async (req, res) => {
     const dispatch = await dispatchService.createDispatch(req.body);
-    await logAudit(req.user!.userId, "DISPATCH", "Dispatch", dispatch.id, req.body);
+    await logAudit(
+      req.user!.userId,
+      "DISPATCH",
+      "Dispatch",
+      dispatch.id,
+      req.body,
+    );
     sendSuccess(res, "Ambulance dispatched successfully", dispatch, 201);
   }),
 );
@@ -997,7 +1113,13 @@ router.patch(
       req.body,
       req.user!.userId,
     );
-    await logAudit(req.user!.userId, "STATUS_UPDATE", "Dispatch", dispatch.id, req.body);
+    await logAudit(
+      req.user!.userId,
+      "STATUS_UPDATE",
+      "Dispatch",
+      dispatch.id,
+      req.body,
+    );
     sendSuccess(res, "Dispatch status updated successfully", dispatch);
   }),
 );
@@ -1006,6 +1128,7 @@ export default router;
 ```
 
 **📝 Commit #21:**
+
 ```
 feat(dispatch): add dispatch module with transaction-safe ambulance assignment and status state machine
 ```
@@ -1057,14 +1180,22 @@ router.get(
         take: limit,
         orderBy: { createdAt: "desc" },
         select: {
-          id: true, name: true, email: true, role: true,
-          phone: true, isActive: true, createdAt: true,
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          phone: true,
+          isActive: true,
+          createdAt: true,
         },
       }),
       prisma.user.count({ where }),
     ]);
 
-    sendSuccess(res, "Users fetched successfully", { users, meta: buildMeta(page, limit, total) });
+    sendSuccess(res, "Users fetched successfully", {
+      users,
+      meta: buildMeta(page, limit, total),
+    });
   }),
 );
 
@@ -1081,7 +1212,9 @@ router.patch(
       data: { role },
       select: { id: true, name: true, email: true, role: true },
     });
-    await logAudit(req.user!.userId, "UPDATE_ROLE", "User", user.id, { newRole: role });
+    await logAudit(req.user!.userId, "UPDATE_ROLE", "User", user.id, {
+      newRole: role,
+    });
     sendSuccess(res, "User role updated successfully", user);
   }),
 );
@@ -1123,7 +1256,10 @@ router.get(
       prisma.auditLog.count({ where }),
     ]);
 
-    sendSuccess(res, "Audit logs fetched successfully", { logs, meta: buildMeta(page, limit, total) });
+    sendSuccess(res, "Audit logs fetched successfully", {
+      logs,
+      meta: buildMeta(page, limit, total),
+    });
   }),
 );
 
@@ -1131,6 +1267,7 @@ export default router;
 ```
 
 **📝 Commit #22:**
+
 ```
 feat(admin): add admin user management and audit log endpoints
 ```
@@ -1161,6 +1298,7 @@ app.use("/api/v1/admin", adminRoutes);
 ```
 
 **📝 Commit #23:**
+
 ```
 feat(app): mount all Day 3 business modules in Express app
 ```
@@ -1170,6 +1308,7 @@ feat(app): mount all Day 3 business modules in Express app
 ## 🔴 Step 10 — Build, Lint & End-to-End Test
 
 ### Commands:
+
 ```bash
 npm run lint:fix
 npm run build
@@ -1178,30 +1317,30 @@ npm run dev
 
 ### Full API Test Checklist in Postman:
 
-| # | Method | URL | Role | Action |
-| --- | ------- | --- | ---- | ------ |
-| 1 | `POST` | `/api/v1/ambulances` | ADMIN | Create ambulance |
-| 2 | `GET` | `/api/v1/ambulances` | Public | List with `?status=AVAILABLE` |
-| 3 | `GET` | `/api/v1/ambulances/:id` | Public | Get single |
-| 4 | `PATCH` | `/api/v1/ambulances/:id` | ADMIN | Update status to MAINTENANCE |
-| 5 | `DELETE` | `/api/v1/ambulances/:id` | ADMIN | Soft delete |
-| 6 | `POST` | `/api/v1/drivers` | ADMIN | Register driver (links a User) |
-| 7 | `GET` | `/api/v1/drivers` | ADMIN | List drivers with `?isAvailable=true` |
-| 8 | `GET` | `/api/v1/drivers/me` | DRIVER | My driver profile |
-| 9 | `POST` | `/api/v1/hospitals` | ADMIN | Create hospital |
-| 10 | `GET` | `/api/v1/hospitals` | Public | List with `?name=dhaka` |
-| 11 | `POST` | `/api/v1/requests` | PATIENT | Create emergency request |
-| 12 | `GET` | `/api/v1/requests/my` | PATIENT | My requests list |
-| 13 | `GET` | `/api/v1/requests` | ADMIN | All requests with filters |
-| 14 | `PATCH` | `/api/v1/requests/:id/cancel` | PATIENT | Cancel pending request |
-| 15 | `POST` | `/api/v1/dispatches` | ADMIN | Dispatch ambulance (transaction) |
-| 16 | `GET` | `/api/v1/dispatches/:id` | ADMIN/DRIVER | Get dispatch details |
-| 17 | `PATCH` | `/api/v1/dispatches/:id/status` | DRIVER | Update status to `EN_ROUTE` |
-| 18 | `PATCH` | `/api/v1/dispatches/:id/status` | DRIVER | Update status to `COMPLETED` |
-| 19 | `GET` | `/api/v1/admin/users` | ADMIN | List users with search/filter |
-| 20 | `PATCH` | `/api/v1/admin/users/:id/role` | ADMIN | Change user role |
-| 21 | `DELETE` | `/api/v1/admin/users/:id` | ADMIN | Soft delete user |
-| 22 | `GET` | `/api/v1/admin/audit-logs` | ADMIN | View all audit logs |
+| #   | Method   | URL                             | Role         | Action                                |
+| --- | -------- | ------------------------------- | ------------ | ------------------------------------- |
+| 1   | `POST`   | `/api/v1/ambulances`            | ADMIN        | Create ambulance                      |
+| 2   | `GET`    | `/api/v1/ambulances`            | Public       | List with `?status=AVAILABLE`         |
+| 3   | `GET`    | `/api/v1/ambulances/:id`        | Public       | Get single                            |
+| 4   | `PATCH`  | `/api/v1/ambulances/:id`        | ADMIN        | Update status to MAINTENANCE          |
+| 5   | `DELETE` | `/api/v1/ambulances/:id`        | ADMIN        | Soft delete                           |
+| 6   | `POST`   | `/api/v1/drivers`               | ADMIN        | Register driver (links a User)        |
+| 7   | `GET`    | `/api/v1/drivers`               | ADMIN        | List drivers with `?isAvailable=true` |
+| 8   | `GET`    | `/api/v1/drivers/me`            | DRIVER       | My driver profile                     |
+| 9   | `POST`   | `/api/v1/hospitals`             | ADMIN        | Create hospital                       |
+| 10  | `GET`    | `/api/v1/hospitals`             | Public       | List with `?name=dhaka`               |
+| 11  | `POST`   | `/api/v1/requests`              | PATIENT      | Create emergency request              |
+| 12  | `GET`    | `/api/v1/requests/my`           | PATIENT      | My requests list                      |
+| 13  | `GET`    | `/api/v1/requests`              | ADMIN        | All requests with filters             |
+| 14  | `PATCH`  | `/api/v1/requests/:id/cancel`   | PATIENT      | Cancel pending request                |
+| 15  | `POST`   | `/api/v1/dispatches`            | ADMIN        | Dispatch ambulance (transaction)      |
+| 16  | `GET`    | `/api/v1/dispatches/:id`        | ADMIN/DRIVER | Get dispatch details                  |
+| 17  | `PATCH`  | `/api/v1/dispatches/:id/status` | DRIVER       | Update status to `EN_ROUTE`           |
+| 18  | `PATCH`  | `/api/v1/dispatches/:id/status` | DRIVER       | Update status to `COMPLETED`          |
+| 19  | `GET`    | `/api/v1/admin/users`           | ADMIN        | List users with search/filter         |
+| 20  | `PATCH`  | `/api/v1/admin/users/:id/role`  | ADMIN        | Change user role                      |
+| 21  | `DELETE` | `/api/v1/admin/users/:id`       | ADMIN        | Soft delete user                      |
+| 22  | `GET`    | `/api/v1/admin/audit-logs`      | ADMIN        | View all audit logs                   |
 
 ---
 
@@ -1212,10 +1351,12 @@ git push origin main
 ```
 
 Check Render logs to confirm:
+
 - Build succeeds with `✔ Generated Prisma Client` + `0 TypeScript errors`
 - Service stays `Live`
 
 **📝 Final Day 3 Commit (if any cleanup needed):**
+
 ```
 fix(day3): lint fixes and cleanup for production build
 ```
@@ -1224,33 +1365,34 @@ fix(day3): lint fixes and cleanup for production build
 
 ## 📊 Day 3 Git Commit Summary
 
-| # | Commit Message | After Step |
-| --- | -------------- | ---------- |
-| 15 | `chore: install multer and cloudinary for file upload infrastructure` | Step 1 |
-| 16 | `feat(utils): add pagination helpers and audit logger utility` | Step 2 |
-| 17 | `feat(ambulance): add full CRUD module with pagination, filtering, and soft delete` | Step 3 |
-| 18 | `feat(driver): add driver module with role promotion, availability filter, and driver profile` | Step 4 |
-| 19 | `feat(hospital): add hospital module with public listing and name search` | Step 5 |
-| 20 | `feat(request): add emergency request module with business rules and patient request tracking` | Step 6 |
-| 21 | `feat(dispatch): add dispatch module with transaction-safe ambulance assignment and status state machine` | Step 7 |
-| 22 | `feat(admin): add admin user management and audit log endpoints` | Step 8 |
-| 23 | `feat(app): mount all Day 3 business modules in Express app` | Step 9 |
+| #   | Commit Message                                                                                            | After Step |
+| --- | --------------------------------------------------------------------------------------------------------- | ---------- |
+| 15  | `chore: install multer and cloudinary for file upload infrastructure`                                     | Step 1     |
+| 16  | `feat(utils): add pagination helpers and audit logger utility`                                            | Step 2     |
+| 17  | `feat(ambulance): add full CRUD module with pagination, filtering, and soft delete`                       | Step 3     |
+| 18  | `feat(driver): add driver module with role promotion, availability filter, and driver profile`            | Step 4     |
+| 19  | `feat(hospital): add hospital module with public listing and name search`                                 | Step 5     |
+| 20  | `feat(request): add emergency request module with business rules and patient request tracking`            | Step 6     |
+| 21  | `feat(dispatch): add dispatch module with transaction-safe ambulance assignment and status state machine` | Step 7     |
+| 22  | `feat(admin): add admin user management and audit log endpoints`                                          | Step 8     |
+| 23  | `feat(app): mount all Day 3 business modules in Express app`                                              | Step 9     |
 
 ---
 
 ## ✅ Day 3 Done Checklist
 
-- [ ] `multer` and `cloudinary` installed
-- [ ] `pagination.ts` + `auditLogger.ts` utilities added
-- [ ] **Ambulance Module**: 5 routes (list, get, create, update, soft delete)
-- [ ] **Driver Module**: 6 routes (list, get, me, create, update, soft delete)
-- [ ] **Hospital Module**: 5 routes (list, get, create, update, soft delete)
-- [ ] **Emergency Request Module**: 5 routes (list, my, get, create, cancel)
-- [ ] **Dispatch Module**: 3 routes (create, get, status update with state machine)
-- [ ] **Admin Module**: 4 routes (list users, update role, delete user, audit logs)
-- [ ] All routes mounted in `src/app.ts`
-- [ ] All 22 Postman tests passing
-- [ ] `npm run build` passing with 0 TypeScript errors
-- [ ] Biome lint clean
-- [ ] 9 clean semantic Git commits pushed to GitHub
-- [ ] Render deployment live and healthy
+- [x] `multer` and `cloudinary` installed
+- [x] `pagination.ts` + `auditLogger.ts` utilities added
+- [x] **Ambulance Module**: 5 routes (list, get, create, update, soft delete)
+- [x] **Driver Module**: 6 routes (list, get, me, create, update, soft delete)
+- [x] **Hospital Module**: 5 routes (list, get, create, update, soft delete)
+- [x] **Emergency Request Module**: 5 routes (list, my, get, create, cancel)
+- [x] **Dispatch Module**: 3 routes (create, get, status update with state machine)
+- [x] **Admin Module**: 4 routes (list users, update role, delete user, audit logs)
+- [x] All routes mounted in `src/app.ts`
+- [x] Full Postman collection updated with Day 3 test requests
+- [x] `npm run build` passing with 0 TypeScript errors
+- [x] Biome lint clean
+- [x] Semantic Git commits pushed to GitHub
+- [x] Render deployment live and healthy
+
