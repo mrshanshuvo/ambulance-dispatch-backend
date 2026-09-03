@@ -198,8 +198,8 @@ model TripStatusLog {
   updatedByUserId String
   createdAt       DateTime       @default(now())
 
-  dispatch    Dispatch @relation(fields: [dispatchId], references: [id])
-  updatedBy   User     @relation(fields: [updatedByUserId], references: [id])
+  dispatch  Dispatch @relation(fields: [dispatchId], references: [id])
+  updatedBy User     @relation(fields: [updatedByUserId], references: [id])
 
   @@index([dispatchId])
   @@index([createdAt])
