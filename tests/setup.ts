@@ -17,7 +17,8 @@ vi.mock("../src/config/cloudinary", () => ({
         const stream = {
           end: vi.fn((_buffer) => {
             cb(null, {
-              secure_url: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+              secure_url:
+                "https://res.cloudinary.com/demo/image/upload/sample.jpg",
               public_id: "sample_id",
             });
           }),
