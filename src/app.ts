@@ -5,7 +5,13 @@ import helmet from "helmet";
 import "express-async-errors";
 import { envConfig } from "./config/env";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
+import adminRoutes from "./modules/admin/admin.routes";
+import ambulanceRoutes from "./modules/ambulance/ambulance.routes";
 import authRoutes from "./modules/auth/auth.routes";
+import dispatchRoutes from "./modules/dispatch/dispatch.routes";
+import driverRoutes from "./modules/driver/driver.routes";
+import hospitalRoutes from "./modules/hospital/hospital.routes";
+import requestRoutes from "./modules/request/request.routes";
 import userRoutes from "./modules/user/user.routes";
 
 const app = express();
@@ -47,6 +53,12 @@ app.get("/health", (_req, res) => {
 // API Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/ambulances", ambulanceRoutes);
+app.use("/api/v1/drivers", driverRoutes);
+app.use("/api/v1/hospitals", hospitalRoutes);
+app.use("/api/v1/requests", requestRoutes);
+app.use("/api/v1/dispatches", dispatchRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 // 404 Catch-All Handler (for undefined routes)
 app.use((req, res) => {
