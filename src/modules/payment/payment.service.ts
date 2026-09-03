@@ -2,7 +2,12 @@ import type Stripe from "stripe";
 import { prisma } from "../../config/db";
 import { stripe } from "../../config/stripe";
 import { AppError } from "../../utils/AppError";
-import type { CreateCheckoutInput } from "./payment.validator";
+import * as bkashHelper from "../../utils/bkash";
+import type {
+  CreateBkashCheckoutInput,
+  CreateCheckoutInput,
+  ExecuteBkashInput,
+} from "./payment.validator";
 
 // ─── Create Stripe Checkout Session ──────────────────────────────────────────
 
@@ -33,7 +38,6 @@ export const createCheckoutSession = async (
   }
 
   // 4. Create Stripe Checkout Session
-  // Stripe amounts are in the smallest currency unit (paisa for BDT)
   const amountInPaisa = Math.round(data.amount * 100);
 
   const session = await stripe.checkout.sessions.create({
@@ -87,6 +91,100 @@ export const createCheckoutSession = async (
   };
 };
 
+// ─── Create bKash Checkout Session ───────────────────────────────────────────
+
+export const createBkashCheckout = async (
+  callerId: string,
+  data: CreateBkashCheckoutInput,
+) => {
+  const request = await prisma.emergencyRequest.findFirst({
+    where: { id: data.requestId, callerId, deletedAt: null },
+    include: { payment: true },
+  });
+  if (!request) {
+    throw new AppError("Emergency request not found", 404);
+  }
+
+  if (request.payment && request.payment.status === "SUCCESS") {
+    throw new AppError("This request has already been paid", 409);
+  }
+
+  if (!["DISPATCHED", "COMPLETED"].includes(request.status)) {
+    throw new AppError(
+      "Payment is only allowed for dispatched or completed requests",
+      400,
+    );
+  }
+
+  const bkashRes = await bkashHelper.createBkashPayment({
+    amount: data.amount,
+    requestId: data.requestId,
+    payerReference: data.payerReference,
+  });
+
+  const payment = await prisma.payment.upsert({
+    where: { requestId: data.requestId },
+    update: {
+      amount: data.amount,
+      currency: "BDT",
+      gateway: "BKASH",
+      sessionId: bkashRes.paymentID,
+      status: "PENDING",
+    },
+    create: {
+      requestId: data.requestId,
+      amount: data.amount,
+      currency: "BDT",
+      gateway: "BKASH",
+      sessionId: bkashRes.paymentID,
+      status: "PENDING",
+    },
+  });
+
+  return {
+    paymentID: bkashRes.paymentID,
+    bkashURL: bkashRes.bkashURL,
+    payment,
+  };
+};
+
+// ─── Execute bKash Payment (Callback / Capture) ──────────────────────────────
+
+export const executeBkashPayment = async (
+  callerId: string,
+  data: ExecuteBkashInput,
+) => {
+  const request = await prisma.emergencyRequest.findFirst({
+    where: { id: data.requestId, callerId, deletedAt: null },
+  });
+  if (!request) {
+    throw new AppError("Emergency request not found", 404);
+  }
+
+  const execRes = await bkashHelper.executeBkashPayment(data.paymentID);
+
+  const payment = await prisma.payment.update({
+    where: { requestId: data.requestId },
+    data: {
+      status: "SUCCESS",
+      gatewayTxnId: execRes.trxID,
+    },
+  });
+
+  // Complete request if dispatched
+  await prisma.emergencyRequest.updateMany({
+    where: { id: data.requestId, status: { in: ["DISPATCHED", "PENDING"] } },
+    data: { status: "COMPLETED" },
+  });
+
+  return {
+    trxID: execRes.trxID,
+    amount: execRes.amount,
+    status: payment.status,
+    payment,
+  };
+};
+
 // ─── Get Payment Status for a Request ────────────────────────────────────────
 
 export const getPaymentByRequestId = async (
@@ -99,7 +197,6 @@ export const getPaymentByRequestId = async (
   });
   if (!request) throw new AppError("Emergency request not found", 404);
 
-  // Only the patient who owns the request or ADMIN can view payment
   if (role !== "ADMIN" && request.callerId !== callerId) {
     throw new AppError("Access denied", 403);
   }
@@ -144,7 +241,6 @@ export const handleStripeWebhook = async (
         },
       });
 
-      // Move request to COMPLETED if it was still DISPATCHED
       await prisma.emergencyRequest.updateMany({
         where: {
           id: requestId,

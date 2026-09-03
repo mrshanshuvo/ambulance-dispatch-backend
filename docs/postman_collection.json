@@ -1000,6 +1000,65 @@
           }
         },
         {
+          "name": "Create bKash Checkout URL (PATIENT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.paymentID) {",
+                  "        pm.environment.set('bkashPaymentID', jsonData.data.paymentID);",
+                  "        console.log('bKash Checkout URL:', jsonData.data.bkashURL);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"amount\": 1500,\n  \"payerReference\": \"01770618575\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/bkash/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "payments", "bkash", "create"]
+            },
+            "description": "Creates a bKash Tokenized Checkout payment. Response returns `bkashURL` to redirect the user to bKash Sandbox PGW interface."
+          }
+        },
+        {
+          "name": "Execute bKash Payment (PATIENT)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentID\": \"{{bkashPaymentID}}\",\n  \"requestId\": \"{{requestId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/bkash/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "payments", "bkash", "execute"]
+            },
+            "description": "Executes/Captures the bKash payment once OTP/PIN is confirmed, returning the transaction ID (trxID) and marking the request COMPLETED."
+          }
+        },
+        {
           "name": "Stripe Webhook (Simulate — for local dev)",
           "request": {
             "method": "POST",
@@ -1075,6 +1134,11 @@
     },
     {
       "key": "stripeWebhookSignature",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bkashPaymentID",
       "value": "",
       "type": "string"
     }

@@ -6,7 +6,7 @@ import { logAudit } from "../../utils/auditLogger";
 import { sendSuccess } from "../../utils/response";
 import * as paymentService from "./payment.service";
 
-// POST /api/v1/payments/checkout
+// POST /api/v1/payments/checkout (Stripe)
 export const createCheckout = asyncHandler(
   async (req: Request, res: Response) => {
     if (!req.user?.userId) throw new AppError("Unauthorized", 401);
@@ -19,9 +19,47 @@ export const createCheckout = asyncHandler(
       "CREATE_CHECKOUT",
       "Payment",
       result.payment.id,
-      { sessionId: result.sessionId },
+      { sessionId: result.sessionId, gateway: "STRIPE" },
     );
     sendSuccess(res, "Checkout session created successfully", result, 201);
+  },
+);
+
+// POST /api/v1/payments/bkash/create (bKash)
+export const createBkashCheckout = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
+    const result = await paymentService.createBkashCheckout(
+      req.user.userId,
+      req.body,
+    );
+    await logAudit(
+      req.user.userId,
+      "CREATE_BKASH_CHECKOUT",
+      "Payment",
+      result.payment.id,
+      { paymentID: result.paymentID, gateway: "BKASH" },
+    );
+    sendSuccess(res, "bKash checkout URL generated successfully", result, 201);
+  },
+);
+
+// POST /api/v1/payments/bkash/execute (bKash)
+export const executeBkash = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
+    const result = await paymentService.executeBkashPayment(
+      req.user.userId,
+      req.body,
+    );
+    await logAudit(
+      req.user.userId,
+      "EXECUTE_BKASH_PAYMENT",
+      "Payment",
+      result.payment.id,
+      { trxID: result.trxID },
+    );
+    sendSuccess(res, "bKash payment executed successfully", result);
   },
 );
 
@@ -39,7 +77,7 @@ export const getPaymentStatus = asyncHandler(
   },
 );
 
-// POST /api/v1/payments/webhook — raw body required (no JSON parsing)
+// POST /api/v1/payments/webhook (Stripe)
 export const stripeWebhook = asyncHandler(
   async (req: Request, res: Response) => {
     const signature = req.headers["stripe-signature"];

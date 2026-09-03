@@ -191,11 +191,13 @@ Driver ──< Dispatch
 
 ### Payments (`/api/v1/payments`)
 
-| Method | Endpoint      | Auth          | Description                    |
-| ------ | ------------- | ------------- | ------------------------------ |
-| `POST` | `/checkout`   | PATIENT       | Create Stripe checkout session |
-| `GET`  | `/:requestId` | PATIENT/ADMIN | Get payment status             |
-| `POST` | `/webhook`    | Stripe Signed | Handle Stripe payment events   |
+| Method | Endpoint         | Auth          | Description                              |
+| ------ | ---------------- | ------------- | ---------------------------------------- |
+| `POST` | `/checkout`      | PATIENT       | Create Stripe checkout session           |
+| `POST` | `/bkash/create`  | PATIENT       | Create bKash payment URL (Tokenized PGW) |
+| `POST` | `/bkash/execute` | PATIENT       | Execute & capture bKash payment          |
+| `GET`  | `/:requestId`    | PATIENT/ADMIN | Get payment status                       |
+| `POST` | `/webhook`       | Stripe Signed | Handle Stripe payment events             |
 
 ### Admin (`/api/v1/admin`)
 
