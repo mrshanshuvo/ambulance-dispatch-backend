@@ -19,11 +19,11 @@
 
 ## 🌐 Live URLs
 
-| Resource | URL |
-|----------|-----|
-| **API Base** | https://ambulance-dispatch-backend-66f2.onrender.com |
+| Resource         | URL                                                         |
+| ---------------- | ----------------------------------------------------------- |
+| **API Base**     | https://ambulance-dispatch-backend-66f2.onrender.com        |
 | **Health Check** | https://ambulance-dispatch-backend-66f2.onrender.com/health |
-| **GitHub** | https://github.com/mrshanshuvo/ambulance-dispatch-backend |
+| **GitHub**       | https://github.com/mrshanshuvo/ambulance-dispatch-backend   |
 
 ---
 
@@ -47,19 +47,19 @@
 
 ## 🏗️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Runtime** | Node.js 24.x |
-| **Framework** | Express.js 4.x |
-| **Language** | TypeScript 5.4 (strict mode) |
-| **ORM** | Prisma 7.10 |
-| **Database** | PostgreSQL (Neon serverless) |
+| Layer              | Technology                                      |
+| ------------------ | ----------------------------------------------- |
+| **Runtime**        | Node.js 24.x                                    |
+| **Framework**      | Express.js 4.x                                  |
+| **Language**       | TypeScript 5.4 (strict mode)                    |
+| **ORM**            | Prisma 7.10                                     |
+| **Database**       | PostgreSQL (Neon serverless)                    |
 | **Authentication** | JWT (jsonwebtoken) + Passport.js (Google OAuth) |
-| **Validation** | Zod |
-| **Payment** | Stripe v22 SDK |
-| **Security** | Helmet, CORS, express-rate-limit |
-| **Linting** | Biome (2-space indent, double quotes) |
-| **Hosting** | Render (auto-deploy from GitHub) |
+| **Validation**     | Zod                                             |
+| **Payment**        | Stripe v22 SDK                                  |
+| **Security**       | Helmet, CORS, express-rate-limit                |
+| **Linting**        | Biome (2-space indent, double quotes)           |
+| **Hosting**        | Render (auto-deploy from GitHub)                |
 
 ---
 
@@ -122,87 +122,87 @@ Driver ──< Dispatch
 
 ### Authentication (`/api/v1/auth`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/register` | Public | Register new patient account |
-| `POST` | `/login` | Public | Login with email & password |
-| `POST` | `/refresh-token` | Public | Get new access token via refresh token |
-| `POST` | `/logout` | Bearer | Logout and invalidate refresh token |
-| `GET` | `/google` | Public | Initiate Google OAuth2 flow |
-| `GET` | `/google/callback` | Public | Google OAuth2 callback |
+| Method | Endpoint           | Auth   | Description                            |
+| ------ | ------------------ | ------ | -------------------------------------- |
+| `POST` | `/register`        | Public | Register new patient account           |
+| `POST` | `/login`           | Public | Login with email & password            |
+| `POST` | `/refresh-token`   | Public | Get new access token via refresh token |
+| `POST` | `/logout`          | Bearer | Logout and invalidate refresh token    |
+| `GET`  | `/google`          | Public | Initiate Google OAuth2 flow            |
+| `GET`  | `/google/callback` | Public | Google OAuth2 callback                 |
 
 ### Users (`/api/v1/users`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/me` | Bearer | Get my profile |
-| `PATCH` | `/me` | Bearer | Update my profile (name, phone, address) |
+| Method  | Endpoint | Auth   | Description                              |
+| ------- | -------- | ------ | ---------------------------------------- |
+| `GET`   | `/me`    | Bearer | Get my profile                           |
+| `PATCH` | `/me`    | Bearer | Update my profile (name, phone, address) |
 
 ### Ambulances (`/api/v1/ambulances`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/` | Public | List all ambulances (`?status=&type=&page=&limit=`) |
-| `GET` | `/:id` | Public | Get ambulance by ID |
-| `POST` | `/` | ADMIN | Create ambulance |
-| `PATCH` | `/:id` | ADMIN | Update ambulance |
-| `DELETE` | `/:id` | ADMIN | Soft delete ambulance |
+| Method   | Endpoint | Auth   | Description                                         |
+| -------- | -------- | ------ | --------------------------------------------------- |
+| `GET`    | `/`      | Public | List all ambulances (`?status=&type=&page=&limit=`) |
+| `GET`    | `/:id`   | Public | Get ambulance by ID                                 |
+| `POST`   | `/`      | ADMIN  | Create ambulance                                    |
+| `PATCH`  | `/:id`   | ADMIN  | Update ambulance                                    |
+| `DELETE` | `/:id`   | ADMIN  | Soft delete ambulance                               |
 
 ### Drivers (`/api/v1/drivers`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/me` | DRIVER | My driver profile + vehicle assignment |
-| `GET` | `/` | ADMIN | List drivers (`?isAvailable=true&page=&limit=`) |
-| `GET` | `/:id` | ADMIN | Get driver by ID |
-| `POST` | `/` | ADMIN | Register driver (auto-promotes user role) |
-| `PATCH` | `/:id` | ADMIN | Update driver |
-| `DELETE` | `/:id` | ADMIN | Soft delete driver |
+| Method   | Endpoint | Auth   | Description                                     |
+| -------- | -------- | ------ | ----------------------------------------------- |
+| `GET`    | `/me`    | DRIVER | My driver profile + vehicle assignment          |
+| `GET`    | `/`      | ADMIN  | List drivers (`?isAvailable=true&page=&limit=`) |
+| `GET`    | `/:id`   | ADMIN  | Get driver by ID                                |
+| `POST`   | `/`      | ADMIN  | Register driver (auto-promotes user role)       |
+| `PATCH`  | `/:id`   | ADMIN  | Update driver                                   |
+| `DELETE` | `/:id`   | ADMIN  | Soft delete driver                              |
 
 ### Hospitals (`/api/v1/hospitals`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/` | Public | List hospitals (`?name=dhaka&page=&limit=`) |
-| `GET` | `/:id` | Public | Get hospital by ID |
-| `POST` | `/` | ADMIN | Create hospital |
-| `PATCH` | `/:id` | ADMIN | Update hospital |
-| `DELETE` | `/:id` | ADMIN | Soft delete hospital |
+| Method   | Endpoint | Auth   | Description                                 |
+| -------- | -------- | ------ | ------------------------------------------- |
+| `GET`    | `/`      | Public | List hospitals (`?name=dhaka&page=&limit=`) |
+| `GET`    | `/:id`   | Public | Get hospital by ID                          |
+| `POST`   | `/`      | ADMIN  | Create hospital                             |
+| `PATCH`  | `/:id`   | ADMIN  | Update hospital                             |
+| `DELETE` | `/:id`   | ADMIN  | Soft delete hospital                        |
 
 ### Emergency Requests (`/api/v1/requests`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/` | PATIENT | Create emergency request |
-| `GET` | `/my` | PATIENT | My request history |
-| `GET` | `/` | ADMIN | All requests (`?status=&priority=&page=&limit=`) |
-| `GET` | `/:id` | Bearer | Get request detail (with dispatch + payment) |
-| `PATCH` | `/:id/cancel` | PATIENT/ADMIN | Cancel a PENDING request |
+| Method  | Endpoint      | Auth          | Description                                      |
+| ------- | ------------- | ------------- | ------------------------------------------------ |
+| `POST`  | `/`           | PATIENT       | Create emergency request                         |
+| `GET`   | `/my`         | PATIENT       | My request history                               |
+| `GET`   | `/`           | ADMIN         | All requests (`?status=&priority=&page=&limit=`) |
+| `GET`   | `/:id`        | Bearer        | Get request detail (with dispatch + payment)     |
+| `PATCH` | `/:id/cancel` | PATIENT/ADMIN | Cancel a PENDING request                         |
 
 ### Dispatch (`/api/v1/dispatches`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/` | ADMIN | Dispatch ambulance (atomic transaction) |
-| `GET` | `/:id` | ADMIN/DRIVER | Get dispatch + trip status timeline |
-| `PATCH` | `/:id/status` | DRIVER/ADMIN | Advance trip status |
+| Method  | Endpoint      | Auth         | Description                             |
+| ------- | ------------- | ------------ | --------------------------------------- |
+| `POST`  | `/`           | ADMIN        | Dispatch ambulance (atomic transaction) |
+| `GET`   | `/:id`        | ADMIN/DRIVER | Get dispatch + trip status timeline     |
+| `PATCH` | `/:id/status` | DRIVER/ADMIN | Advance trip status                     |
 
 ### Payments (`/api/v1/payments`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/checkout` | PATIENT | Create Stripe checkout session |
-| `GET` | `/:requestId` | PATIENT/ADMIN | Get payment status |
-| `POST` | `/webhook` | Stripe Signed | Handle Stripe payment events |
+| Method | Endpoint      | Auth          | Description                    |
+| ------ | ------------- | ------------- | ------------------------------ |
+| `POST` | `/checkout`   | PATIENT       | Create Stripe checkout session |
+| `GET`  | `/:requestId` | PATIENT/ADMIN | Get payment status             |
+| `POST` | `/webhook`    | Stripe Signed | Handle Stripe payment events   |
 
 ### Admin (`/api/v1/admin`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/users` | ADMIN | List users (`?search=&role=&page=&limit=`) |
-| `PATCH` | `/users/:id/role` | ADMIN | Update user role |
-| `DELETE` | `/users/:id` | ADMIN | Soft delete user |
-| `GET` | `/audit-logs` | ADMIN | View audit trail (`?entityType=`) |
+| Method   | Endpoint          | Auth  | Description                                |
+| -------- | ----------------- | ----- | ------------------------------------------ |
+| `GET`    | `/users`          | ADMIN | List users (`?search=&role=&page=&limit=`) |
+| `PATCH`  | `/users/:id/role` | ADMIN | Update user role                           |
+| `DELETE` | `/users/:id`      | ADMIN | Soft delete user                           |
+| `GET`    | `/audit-logs`     | ADMIN | View audit trail (`?entityType=`)          |
 
 ---
 
@@ -306,6 +306,7 @@ Import [`docs/postman_collection.json`](./docs/postman_collection.json) into [Po
 The collection is organized into **9 numbered folders** (00–09) covering all modules. Test scripts automatically save tokens and IDs between requests.
 
 **Recommended test flow:**
+
 1. `01. Auth Module` → Register + Login (tokens auto-saved)
 2. `03. Ambulance Module` → Create ambulance (ID auto-saved)
 3. `04. Driver Module` → Register driver (ID auto-saved)
@@ -359,24 +360,24 @@ npm run format       # Format source files with Biome
 
 ## 🔐 RBAC Permission Matrix
 
-| Endpoint Group | PATIENT | DRIVER | ADMIN |
-|---------------|---------|--------|-------|
-| Auth | ✅ | ✅ | ✅ |
-| User Profile (own) | ✅ | ✅ | ✅ |
-| Ambulances (read) | ✅ | ✅ | ✅ |
-| Ambulances (write) | ❌ | ❌ | ✅ |
-| Drivers (read) | ❌ | Self only | ✅ |
-| Drivers (write) | ❌ | ❌ | ✅ |
-| Hospitals (read) | ✅ | ✅ | ✅ |
-| Hospitals (write) | ❌ | ❌ | ✅ |
-| Emergency Requests (create) | ✅ | ❌ | ❌ |
-| Emergency Requests (read all) | ❌ | ❌ | ✅ |
-| Emergency Requests (read own) | ✅ | ❌ | ✅ |
-| Emergency Requests (cancel) | Own only | ❌ | ✅ |
-| Dispatch (create) | ❌ | ❌ | ✅ |
-| Dispatch (status update) | ❌ | ✅ | ✅ |
-| Payments | Own only | ❌ | ✅ |
-| Admin Panel | ❌ | ❌ | ✅ |
+| Endpoint Group                | PATIENT  | DRIVER    | ADMIN |
+| ----------------------------- | -------- | --------- | ----- |
+| Auth                          | ✅       | ✅        | ✅    |
+| User Profile (own)            | ✅       | ✅        | ✅    |
+| Ambulances (read)             | ✅       | ✅        | ✅    |
+| Ambulances (write)            | ❌       | ❌        | ✅    |
+| Drivers (read)                | ❌       | Self only | ✅    |
+| Drivers (write)               | ❌       | ❌        | ✅    |
+| Hospitals (read)              | ✅       | ✅        | ✅    |
+| Hospitals (write)             | ❌       | ❌        | ✅    |
+| Emergency Requests (create)   | ✅       | ❌        | ❌    |
+| Emergency Requests (read all) | ❌       | ❌        | ✅    |
+| Emergency Requests (read own) | ✅       | ❌        | ✅    |
+| Emergency Requests (cancel)   | Own only | ❌        | ✅    |
+| Dispatch (create)             | ❌       | ❌        | ✅    |
+| Dispatch (status update)      | ❌       | ✅        | ✅    |
+| Payments                      | Own only | ❌        | ✅    |
+| Admin Panel                   | ❌       | ❌        | ✅    |
 
 ---
 
