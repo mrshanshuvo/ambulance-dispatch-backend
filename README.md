@@ -23,6 +23,7 @@
 | ---------------- | ----------------------------------------------------------- |
 | **API Base**     | https://ambulance-dispatch-backend-66f2.onrender.com        |
 | **Health Check** | https://ambulance-dispatch-backend-66f2.onrender.com/health |
+| **Postman Docs** | https://documenter.getpostman.com/view/47434753/2sBYAvvATP  |
 | **GitHub**       | https://github.com/mrshanshuvo/ambulance-dispatch-backend   |
 
 ---
@@ -303,7 +304,8 @@ REDIS_URL=redis://default:password@host:port
 
 ## 🧪 Testing the API
 
-Import [`docs/postman_collection.json`](./docs/postman_collection.json) into [Postman](https://postman.com).
+- **Live Published Docs**: [https://documenter.getpostman.com/view/47434753/2sBYAvvATP](https://documenter.getpostman.com/view/47434753/2sBYAvvATP) (Includes interactive "Run in Postman" button)
+- **Local File**: Import [`docs/postman_collection.json`](./docs/postman_collection.json) directly into [Postman](https://postman.com).
 
 The collection is organized into **9 numbered folders** (00–09) covering all modules. Test scripts automatically save tokens and IDs between requests.
 

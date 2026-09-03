@@ -9,7 +9,7 @@ export const envConfig = {
   clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
   docsUrl:
     process.env.DOCS_URL ||
-    "https://github.com/mrshanshuvo/ambulance-dispatch-backend#readme",
+    "https://documenter.getpostman.com/view/47434753/2sBYAvvATP",
   databaseUrl: process.env.DATABASE_URL,
   jwt: {
     secret: process.env.JWT_SECRET || "your-jwt-secret",
