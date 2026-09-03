@@ -334,7 +334,7 @@ Stripe   →  POST /payments/webhook   →  Payment marked SUCCESS
                                      EmergencyRequest → COMPLETED
 ```
 
-**To test webhooks locally:**
+**To test Stripe webhooks locally:**
 
 ```bash
 # Install Stripe CLI (https://stripe.com/docs/stripe-cli)
@@ -344,6 +344,30 @@ stripe listen --forward-to localhost:5000/api/v1/payments/webhook
 # In another terminal, trigger an event:
 stripe trigger checkout.session.completed
 ```
+
+---
+
+## 🇧🇩 bKash Tokenized Checkout Flow
+
+```
+PATIENT  →  POST /payments/bkash/create   →  bKash Sandbox Payment Page (bkashURL)
+                                                  ↓ (Enter Sandbox Wallet, OTP, PIN)
+PATIENT  →  POST /payments/bkash/execute  →  Payment captured (trxID recorded)
+                                                  ↓
+                                         EmergencyRequest → COMPLETED
+```
+
+### 🧪 bKash Sandbox Test Credentials & Wallets
+
+| Key | Sandbox Test Value |
+| :--- | :--- |
+| **API Version** | `v1.2.0-beta` (Tokenized Checkout) |
+| **Base URL** | `https://tokenized.sandbox.bka.sh/v1.2.0-beta` |
+| **Active Wallets (Success)** | `01770618575`, `01929918378`, `01770618576`, `01877722345` |
+| **Wallet (Insufficient Balance)** | `01823074817` |
+| **Wallet (Debit Block)** | `01823074818` |
+| **OTP** | `123456` |
+| **PIN** | `12121` |
 
 ---
 
