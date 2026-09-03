@@ -134,14 +134,14 @@ export const sslcommerzCancel = asyncHandler(
 // POST /api/v1/payments/sslcommerz/ipn (Instant Payment Notification)
 export const sslcommerzIPN = asyncHandler(
   async (req: Request, res: Response) => {
-    const { val_id, tran_id, status } = req.body;
+    const { val_id, status } = req.body;
     if (val_id && (status === "VALID" || status === "VALIDATED")) {
-      // Find request by tran_id
       const payment = await paymentService.finalizeSSLCommerzPayment(
         req.body.value_a || "",
         val_id,
       );
-      return res.json({ success: true, payment });
+      res.json({ success: true, payment });
+      return;
     }
     res.json({ success: true, received: true });
   },
