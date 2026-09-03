@@ -27,3 +27,29 @@ vi.mock("../src/config/cloudinary", () => ({
     },
   },
 }));
+
+vi.mock("../src/config/stripe", () => ({
+  stripe: {
+    checkout: {
+      sessions: {
+        create: vi.fn(async (params) => ({
+          id: `cs_test_${Date.now()}`,
+          url: "https://checkout.stripe.com/c/pay/cs_test_mock_url",
+          payment_method_types: params.payment_method_types,
+          metadata: params.metadata,
+        })),
+      },
+    },
+    webhooks: {
+      constructEvent: vi.fn((body, sig, secret) => ({
+        type: "checkout.session.completed",
+        data: {
+          object: {
+            metadata: { requestId: "mock-request-id" },
+            payment_intent: "pi_mock_123456",
+          },
+        },
+      })),
+    },
+  },
+}));

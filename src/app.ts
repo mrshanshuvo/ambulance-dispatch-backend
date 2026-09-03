@@ -24,12 +24,7 @@ app.use(cors({ origin: envConfig.clientUrl, credentials: true }));
 // Rate limiting (100 requests per 15 min window)
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-// ─── IMPORTANT: Payment webhook MUST be mounted before express.json() ────────
-// Stripe needs the raw request body to verify the webhook signature.
-// The /webhook sub-route inside paymentRoutes applies its own raw body parser.
-app.use("/api/v1/payments", paymentRoutes);
-
-// Body parsing (for all other routes)
+// Body parsing (for all routes)
 app.use(express.json());
 
 // Root Welcome / API Info Endpoint
@@ -64,6 +59,7 @@ app.use("/api/v1/drivers", driverRoutes);
 app.use("/api/v1/hospitals", hospitalRoutes);
 app.use("/api/v1/requests", requestRoutes);
 app.use("/api/v1/dispatches", dispatchRoutes);
+app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
 // 404 Catch-All Handler (for undefined routes)
