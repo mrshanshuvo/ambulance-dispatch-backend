@@ -221,6 +221,39 @@
           }
         },
         {
+          "name": "Upload Profile Picture / Avatar (Cloudinary)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/avatar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me", "avatar"]
+            },
+            "description": "Uploads user profile picture via Multer memory stream to Cloudinary and saves the secure URL."
+          }
+        },
+        {
           "name": "Update Profile (Me)",
           "request": {
             "auth": {
@@ -887,6 +920,23 @@
                 { "key": "limit", "value": "20" }
               ]
             }
+          }
+        },
+        {
+          "name": "Get Dashboard Statistics (ADMIN)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "stats"]
+            },
+            "description": "Returns system metrics: total users, drivers, ambulance availability breakdown, emergency request status counts, and total revenue."
           }
         }
       ]

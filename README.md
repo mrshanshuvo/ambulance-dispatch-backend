@@ -133,10 +133,11 @@ Driver ──< Dispatch
 
 ### Users (`/api/v1/users`)
 
-| Method  | Endpoint | Auth   | Description                              |
-| ------- | -------- | ------ | ---------------------------------------- |
-| `GET`   | `/me`    | Bearer | Get my profile                           |
-| `PATCH` | `/me`    | Bearer | Update my profile (name, phone, address) |
+| Method  | Endpoint     | Auth   | Description                              |
+| ------- | ------------ | ------ | ---------------------------------------- |
+| `GET`   | `/me`        | Bearer | Get my profile                           |
+| `PATCH` | `/me`        | Bearer | Update my profile (name, phone, address) |
+| `POST`  | `/me/avatar` | Bearer | Upload profile picture via Cloudinary    |
 
 ### Ambulances (`/api/v1/ambulances`)
 
@@ -203,6 +204,7 @@ Driver ──< Dispatch
 | `PATCH`  | `/users/:id/role` | ADMIN | Update user role                           |
 | `DELETE` | `/users/:id`      | ADMIN | Soft delete user                           |
 | `GET`    | `/audit-logs`     | ADMIN | View audit trail (`?entityType=`)          |
+| `GET`    | `/stats`          | ADMIN | View dashboard statistics & summary counts |
 
 ---
 

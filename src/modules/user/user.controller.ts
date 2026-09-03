@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../utils/AppError";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { logAudit } from "../../utils/auditLogger";
 import { sendSuccess } from "../../utils/response";
 import * as userService from "./user.service";
 
@@ -19,3 +20,19 @@ export const updateMe = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.updateMe(req.user.userId, req.body);
   sendSuccess(res, "Profile updated successfully", user);
 });
+
+export const uploadAvatar = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user) throw new AppError("Unauthorized", 401);
+    if (!req.file) throw new AppError("No image file provided", 400);
+
+    const user = await userService.uploadAvatar(
+      req.user.userId,
+      req.file.buffer,
+      req.file.mimetype,
+    );
+
+    await logAudit(req.user.userId, "UPLOAD_AVATAR", "User", req.user.userId);
+    sendSuccess(res, "Avatar uploaded successfully", user);
+  },
+);

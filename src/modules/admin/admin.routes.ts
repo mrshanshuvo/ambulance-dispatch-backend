@@ -122,4 +122,68 @@ router.get(
   }),
 );
 
+// GET /api/v1/admin/stats — Dashboard summary statistics
+router.get(
+  "/stats",
+  asyncHandler(async (_req, res) => {
+    const [
+      totalUsers,
+      totalDrivers,
+      totalAmbulances,
+      availableAmbulances,
+      dispatchedAmbulances,
+      totalRequests,
+      pendingRequests,
+      completedRequests,
+      totalRevenueResult,
+    ] = await Promise.all([
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.driver.count({ where: { deletedAt: null } }),
+      prisma.ambulance.count({ where: { deletedAt: null } }),
+      prisma.ambulance.count({
+        where: { deletedAt: null, status: "AVAILABLE" },
+      }),
+      prisma.ambulance.count({
+        where: { deletedAt: null, status: "DISPATCHED" },
+      }),
+      prisma.emergencyRequest.count({ where: { deletedAt: null } }),
+      prisma.emergencyRequest.count({
+        where: { deletedAt: null, status: "PENDING" },
+      }),
+      prisma.emergencyRequest.count({
+        where: { deletedAt: null, status: "COMPLETED" },
+      }),
+      prisma.payment.aggregate({
+        where: { status: "SUCCESS" },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const stats = {
+      users: {
+        total: totalUsers,
+        drivers: totalDrivers,
+      },
+      ambulances: {
+        total: totalAmbulances,
+        available: availableAmbulances,
+        dispatched: dispatchedAmbulances,
+        maintenance:
+          totalAmbulances - (availableAmbulances + dispatchedAmbulances),
+      },
+      requests: {
+        total: totalRequests,
+        pending: pendingRequests,
+        completed: completedRequests,
+      },
+      payments: {
+        totalRevenue: totalRevenueResult._sum.amount || 0,
+        currency: "BDT",
+      },
+    };
+
+    sendSuccess(res, "Admin stats fetched successfully", stats);
+  }),
+);
+
 export default router;
