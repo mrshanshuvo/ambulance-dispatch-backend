@@ -182,7 +182,7 @@ describe("Emergency Ambulance Dispatch Lifecycle (E2E)", () => {
     expect(driverCheck?.isAvailable).toBe(true);
   });
 
-  it("Step 6: Patient initiates payment checkout & views payment status", async () => {
+  it("Step 6: Patient initiates Stripe payment checkout & views status", async () => {
     const payRes = await request(app)
       .post("/api/v1/payments/checkout")
       .set("Authorization", `Bearer ${patientToken}`)
@@ -195,6 +195,7 @@ describe("Emergency Ambulance Dispatch Lifecycle (E2E)", () => {
     expect(payRes.status).toBe(201);
     expect(payRes.body.data.checkoutUrl).toBeDefined();
     expect(payRes.body.data.sessionId).toBeDefined();
+    expect(payRes.body.data.payment.gateway).toBe("STRIPE");
 
     // Fetch payment status
     const statusRes = await request(app)
@@ -204,5 +205,54 @@ describe("Emergency Ambulance Dispatch Lifecycle (E2E)", () => {
     expect(statusRes.status).toBe(200);
     expect(statusRes.body.data.status).toBe("PENDING");
     expect(statusRes.body.data.amount).toBe(2500);
+  });
+
+  it("Step 7: Patient completes bKash payment flow (Tokenized PGW)", async () => {
+    // Create new dispatched request for bKash E2E flow
+    const patientUser = await prisma.user.findFirst({
+      where: { email: testPatient.email },
+    });
+    const bkashReq = await prisma.emergencyRequest.create({
+      data: {
+        callerId: patientUser!.id,
+        pickupAddress: "Dhanmondi 27, Dhaka",
+        priority: "CRITICAL",
+        status: "DISPATCHED",
+      },
+    });
+
+    // 7.1 Create bKash URL
+    const createRes = await request(app)
+      .post("/api/v1/payments/bkash/create")
+      .set("Authorization", `Bearer ${patientToken}`)
+      .send({
+        requestId: bkashReq.id,
+        amount: 1500,
+        payerReference: "01770618575",
+      });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.data.bkashURL).toBeDefined();
+    const paymentID = createRes.body.data.paymentID;
+    expect(paymentID).toBeDefined();
+
+    // 7.2 Execute bKash Payment
+    const execRes = await request(app)
+      .post("/api/v1/payments/bkash/execute")
+      .set("Authorization", `Bearer ${patientToken}`)
+      .send({
+        paymentID,
+        requestId: bkashReq.id,
+      });
+
+    expect(execRes.status).toBe(200);
+    expect(execRes.body.data.status).toBe("SUCCESS");
+    expect(execRes.body.data.trxID).toBeDefined();
+
+    // 7.3 Confirm request status updated to COMPLETED
+    const checkReq = await prisma.emergencyRequest.findUnique({
+      where: { id: bkashReq.id },
+    });
+    expect(checkReq?.status).toBe("COMPLETED");
   });
 });

@@ -54,3 +54,36 @@ vi.mock("../src/config/stripe", () => ({
     },
   },
 }));
+
+// Mock bKash helper network calls
+vi.mock("../src/utils/bkash", () => ({
+  getBkashIdToken: vi.fn(async () => "mock-bkash-id-token"),
+  createBkashPayment: vi.fn(async (params) => ({
+    statusCode: "0000",
+    statusMessage: "Successful",
+    paymentID: `BK_${Date.now()}`,
+    bkashURL: "https://tokenized.sandbox.bka.sh/v1.2.0-beta/checkout/mock-url",
+    callbackURL: "http://localhost:5000/api/v1/payments/bkash/callback",
+    amount: params.amount.toString(),
+    currency: "BDT",
+    merchantInvoiceNumber: `INV-${params.requestId.slice(0, 8)}`,
+  })),
+  executeBkashPayment: vi.fn(async (paymentID) => ({
+    statusCode: "0000",
+    statusMessage: "Successful",
+    paymentID,
+    trxID: `TRX_${Date.now()}`,
+    amount: "1500",
+    transactionStatus: "Completed",
+    currency: "BDT",
+  })),
+  queryBkashPayment: vi.fn(async (paymentID) => ({
+    statusCode: "0000",
+    statusMessage: "Successful",
+    paymentID,
+    trxID: `TRX_${Date.now()}`,
+    amount: "1500",
+    transactionStatus: "Completed",
+    currency: "BDT",
+  })),
+}));

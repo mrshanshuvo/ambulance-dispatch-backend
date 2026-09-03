@@ -233,7 +233,7 @@ export const handleStripeWebhook = async (
       const requestId = session.metadata?.requestId;
       if (!requestId) break;
 
-      await prisma.payment.update({
+      await prisma.payment.updateMany({
         where: { requestId },
         data: {
           status: "SUCCESS",
