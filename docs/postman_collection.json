@@ -1695,10 +1695,11 @@
                   "query": [
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "20" },
-                    { "key": "entityType", "value": "", "disabled": true, "description": "Filter by: User | Driver | Ambulance | Dispatch" }
+                    { "key": "action", "value": "UPDATE_STATUS", "disabled": true, "description": "Filter by action: CREATE | UPDATE | DELETE | UPDATE_ROLE | UPDATE_STATUS | DISPATCH | STATUS_UPDATE" },
+                    { "key": "entityType", "value": "User", "disabled": true, "description": "Filter by entity: User | Driver | Ambulance | Dispatch | EmergencyRequest" }
                   ]
                 },
-                "description": "Returns system audit trail. Records all `CREATE`, `UPDATE`, `DELETE`, and `UPDATE_ROLE` actions with the admin actor's ID."
+                "description": "Returns system audit trail. Records all actions (CREATE, UPDATE, DELETE, UPDATE_ROLE, UPDATE_STATUS, DISPATCH, etc.) with the admin actor's ID. Supports filtering by ?action= and ?entityType=."
               }
             },
             {
