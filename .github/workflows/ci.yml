@@ -1,0 +1,56 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-lint:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://neondb_owner:npg_K4lDURw5MfLj@ep-young-lake-b3kk8do2-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require' }}
+      JWT_SECRET: "test-jwt-secret-key-32-chars-long-here"
+      JWT_REFRESH_SECRET: "test-jwt-refresh-secret-key-32-chars"
+      STRIPE_SECRET_KEY: "sk_test_placeholder"
+      STRIPE_PUBLISHABLE_KEY: "pk_test_placeholder"
+      STRIPE_WEBHOOK_SECRET: "whsec_placeholder"
+      BKASH_BASE_URL: "https://tokenized.sandbox.bka.sh/v1.2.0-beta"
+      BKASH_APP_KEY: "test_key"
+      BKASH_APP_SECRET: "test_secret"
+      BKASH_USERNAME: "sandboxTokenizedUser02"
+      BKASH_PASSWORD: "test_password"
+      BKASH_CALLBACK_URL: "http://localhost:5000/api/v1/payments/bkash/callback"
+      SSLCOMMERZ_STORE_ID: "emerg6a993ce356e43"
+      SSLCOMMERZ_STORE_PASSWORD: "test_store_password"
+      SSLCOMMERZ_IS_LIVE: false
+      SSLCOMMERZ_SESSION_URL: "https://sandbox.sslcommerz.com/gwprocess/v4/api.php"
+      SSLCOMMERZ_VALIDATION_URL: "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Type Check (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Linter Check (Biome)
+        run: npm run lint
+
+      - name: Run Test Suite (Vitest)
+        run: npm test

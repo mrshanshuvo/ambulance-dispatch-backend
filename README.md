@@ -8,6 +8,9 @@
   <a href="https://ambulance-dispatch-backend-66f2.onrender.com/health">
     <img src="https://img.shields.io/badge/status-live-brightgreen?style=flat-square" alt="Live Status" />
   </a>
+  <a href="https://github.com/mrshanshuvo/ambulance-dispatch-backend/actions/workflows/ci.yml">
+    <img src="https://github.com/mrshanshuvo/ambulance-dispatch-backend/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline" />
+  </a>
   <img src="https://img.shields.io/badge/Node.js-24.x-339933?style=flat-square&logo=node.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.4-3178C6?style=flat-square&logo=typescript" />
   <img src="https://img.shields.io/badge/Prisma-7.10-2D3748?style=flat-square&logo=prisma" />
