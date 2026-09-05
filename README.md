@@ -41,6 +41,10 @@
 - **Trip Status Machine** — 6-stage status progression: `DISPATCHED → EN_ROUTE → PATIENT_PICKUP → HOSPITAL_SELECTED → HOSPITAL_ARRIVAL → COMPLETED`
 - **Audit Logging** — Every create/update/delete action is logged with actor, entity, and metadata
 - **Stripe Payment Integration** — Hosted checkout sessions, webhook-driven payment confirmation
+- **bKash Tokenized Checkout** — Direct tokenized PGW integration (create, execute, refund)
+- **SSLCommerz Hosted Gateway** — IPN webhooks, secure transaction validation & callback handling
+- **Redis Caching** — High-performance caching on admin stats with graceful database fallback
+- **Auth Rate Limiting** — Dedicated rate limiting on login/register endpoints preventing brute-force
 - **Soft Deletes** — All critical records use `deletedAt` instead of hard deletes
 - **Pagination** — All list endpoints support `?page=&limit=` with total/totalPages metadata
 
@@ -55,9 +59,11 @@
 | **Language**       | TypeScript 5.4 (strict mode)                    |
 | **ORM**            | Prisma 7.10                                     |
 | **Database**       | PostgreSQL (Neon serverless)                    |
+| **Cache**          | Redis (ioredis / Redis Cloud)                   |
 | **Authentication** | JWT (jsonwebtoken) + Passport.js (Google OAuth) |
 | **Validation**     | Zod                                             |
-| **Payment**        | Stripe v22 SDK                                  |
+| **Payment**        | Stripe v22, bKash Tokenized, SSLCommerz         |
+| **Testing**        | Vitest (Unit, Integration, E2E)                 |
 | **Security**       | Helmet, CORS, express-rate-limit                |
 | **Linting**        | Biome (2-space indent, double quotes)           |
 | **Hosting**        | Render (auto-deploy from GitHub)                |
@@ -395,6 +401,9 @@ npm run db:studio    # Open Prisma Studio GUI
 npm run lint         # Check code with Biome
 npm run lint:fix     # Auto-fix lint issues with Biome
 npm run format       # Format source files with Biome
+npm test             # Run test suite (Vitest - Unit, Integration & E2E)
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
 ```
 
 ---
