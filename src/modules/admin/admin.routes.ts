@@ -2,16 +2,36 @@ import { Router } from "express";
 import { prisma } from "../../config/db";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/rbac.middleware";
+import { validate } from "../../middlewares/validate.middleware";
 import { AppError } from "../../utils/AppError";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { logAudit } from "../../utils/auditLogger";
 import { buildMeta, getPagination } from "../../utils/pagination";
 import { sendSuccess } from "../../utils/response";
+import * as adminService from "./admin.service";
+import { createAdminDriverSchema } from "./admin.validator";
 
 const router = Router();
 
 // All admin routes require ADMIN role
 router.use(authenticate, authorize("ADMIN"));
+
+// POST /api/v1/admin/drivers — Direct driver onboarding by Admin
+router.post(
+  "/drivers",
+  validate(createAdminDriverSchema),
+  asyncHandler(async (req, res) => {
+    const result = await adminService.createDriverByAdmin(req.body);
+    await logAudit(
+      req.user?.userId,
+      "CREATE",
+      "Driver",
+      result.driver.id,
+      { email: result.user.email, licenseNumber: result.driver.licenseNumber },
+    );
+    sendSuccess(res, "Driver created successfully", result, 201);
+  }),
+);
 
 // GET /api/v1/admin/users — List all users with pagination + search
 router.get(

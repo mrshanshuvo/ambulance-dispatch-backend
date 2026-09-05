@@ -2,16 +2,77 @@
   "info": {
     "_postman_id": "9b1e5a2c-63b7-4a5f-9e77-ambulance-dispatch-v2",
     "name": "Emergency Ambulance Dispatch System API",
-    "description": "API documentation and test collection for Emergency Ambulance Dispatch System backend.\n\nBase URL Local: `http://localhost:5000`\nBase URL Production: `https://ambulance-dispatch-backend-66f2.onrender.com`",
+    "description": "# Emergency Ambulance Dispatch System\n\nComplete API collection for the Emergency Ambulance Dispatch System backend.\n\n## Base URLs\n- **Local**: `http://localhost:5000`\n- **Production**: `https://ambulance-dispatch-backend-66f2.onrender.com`\n\n## Authentication\nThis collection uses Bearer Token authentication. Tokens are automatically managed by test scripts after login or register. The collection-level pre-request script auto-refreshes expired access tokens.\n\n## Roles\n| Role | Description |\n|---|---|\n| `PATIENT` | Default public role. Can create emergency requests and pay. |\n| `DRIVER` | Assigned by Admin. Can view dispatches and update trip status. |\n| `ADMIN` | Full system access including user, ambulance, and driver management. |\n\n## Workflow Order\n1. Login as Admin\n2. Create Ambulance\n3. Create Driver (Admin Direct Onboarding)\n4. Register / Login as Patient\n5. Create Emergency Request\n6. Admin Dispatches Ambulance + Driver\n7. Driver updates trip status\n8. Patient pays via gateway\n9. Verify payment and check admin stats",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-refresh access token if it exists but is expired",
+          "const accessToken = pm.collectionVariables.get('accessToken') || pm.environment.get('accessToken');",
+          "const refreshToken = pm.collectionVariables.get('refreshToken') || pm.environment.get('refreshToken');",
+          "",
+          "if (!accessToken || !refreshToken) return;",
+          "",
+          "try {",
+          "    const payload = JSON.parse(atob(accessToken.split('.')[1]));",
+          "    const expiry = payload.exp * 1000;",
+          "    const now = Date.now();",
+          "    const fiveMinutes = 5 * 60 * 1000;",
+          "",
+          "    if (expiry - now < fiveMinutes) {",
+          "        const baseUrl = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl');",
+          "        pm.sendRequest({",
+          "            url: baseUrl + '/api/v1/auth/refresh-token',",
+          "            method: 'POST',",
+          "            header: { 'Content-Type': 'application/json' },",
+          "            body: { mode: 'raw', raw: JSON.stringify({ refreshToken }) }",
+          "        }, (err, res) => {",
+          "            if (!err && res.code === 200) {",
+          "                const newToken = res.json().data.accessToken;",
+          "                pm.collectionVariables.set('accessToken', newToken);",
+          "                pm.environment.set('accessToken', newToken);",
+          "            }",
+          "        });",
+          "    }",
+          "} catch (e) { /* token parse error — skip refresh */ }"
+        ]
+      }
+    }
+  ],
   "item": [
     {
       "name": "00. System & Health",
+      "description": "Liveness and readiness probes for server monitoring and deployment verification.",
       "item": [
         {
           "name": "Get Root / API Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
+            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
             "url": {
@@ -19,12 +80,28 @@
               "host": ["{{baseUrl}}"],
               "path": [""]
             },
-            "description": "Returns basic API information, status, version, and links."
+            "description": "Returns basic API information, version, and links."
           }
         },
         {
           "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has status field', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
+            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
             "url": {
@@ -32,13 +109,14 @@
               "host": ["{{baseUrl}}"],
               "path": ["health"]
             },
-            "description": "Liveness probe for server monitoring."
+            "description": "Liveness probe for server monitoring and uptime checks."
           }
         }
       ]
     },
     {
       "name": "01. Auth Module",
+      "description": "Authentication and token management endpoints.",
       "item": [
         {
           "name": "01.1 Email & Password Auth",
@@ -49,37 +127,47 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Response has success flag', () => {",
+                      "    pm.expect(pm.response.json().success).to.be.true;",
+                      "});",
+                      "pm.test('Returns user with PATIENT role', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.user.role).to.equal('PATIENT');",
+                      "    pm.expect(data.user.email).to.be.a('string');",
+                      "});",
+                      "pm.test('Returns access and refresh tokens', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.accessToken).to.be.a('string');",
+                      "    pm.expect(data.refreshToken).to.be.a('string');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.accessToken) {",
-                      "        pm.environment.set('accessToken', jsonData.data.accessToken);",
-                      "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
-                      "    }",
+                      "    const data = pm.response.json().data;",
+                      "    pm.collectionVariables.set('accessToken', data.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                      "    pm.environment.set('accessToken', data.accessToken);",
+                      "    pm.environment.set('refreshToken', data.refreshToken);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+8801712345678\",\n  \"address\": \"Dhanmondi, Dhaka\"\n}"
+                  "raw": "{\n  \"name\": \"Sultana Patient\",\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+8801822334455\",\n  \"address\": \"House 12, Road 27, Dhanmondi, Dhaka\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/auth/register",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "auth", "register"]
                 },
-                "description": "Registers a new patient and returns JWT tokens."
+                "description": "Registers a new user account. Role is always set to `PATIENT` on public registration for security. Drivers and Admins can only be created by existing Admins.\n\n**Auto-sets**: `{{accessToken}}`, `{{refreshToken}}`"
               }
             },
             {
@@ -88,27 +176,32 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has success flag', () => {",
+                      "    pm.expect(pm.response.json().success).to.be.true;",
+                      "});",
+                      "pm.test('Returns tokens', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.accessToken).to.be.a('string');",
+                      "    pm.expect(data.refreshToken).to.be.a('string');",
+                      "});",
                       "if (pm.response.code === 200) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.accessToken) {",
-                      "        pm.environment.set('accessToken', jsonData.data.accessToken);",
-                      "        pm.environment.set('refreshToken', jsonData.data.refreshToken);",
-                      "    }",
+                      "    const data = pm.response.json().data;",
+                      "    pm.collectionVariables.set('accessToken', data.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                      "    pm.environment.set('accessToken', data.accessToken);",
+                      "    pm.environment.set('refreshToken', data.refreshToken);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"admin@ambulance.dev\",\n  \"password\": \"Admin@123\"\n}"
@@ -118,7 +211,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "auth", "login"]
                 },
-                "description": "Logs in user with email & password and sets access/refresh tokens in Postman variables."
+                "description": "Authenticates any user by email and password. Change the body to login as different roles.\n\n**Default body**: Admin credentials.\n\n**Auto-sets**: `{{accessToken}}`, `{{refreshToken}}`"
               }
             }
           ]
@@ -132,26 +225,25 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Returns new access token', () => {",
+                      "    pm.expect(pm.response.json().data.accessToken).to.be.a('string');",
+                      "});",
                       "if (pm.response.code === 200) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.accessToken) {",
-                      "        pm.environment.set('accessToken', jsonData.data.accessToken);",
-                      "    }",
+                      "    const token = pm.response.json().data.accessToken;",
+                      "    pm.collectionVariables.set('accessToken', token);",
+                      "    pm.environment.set('accessToken', token);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
@@ -161,22 +253,23 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "auth", "refresh-token"]
                 },
-                "description": "Generates a fresh access token using the refresh token."
+                "description": "Issues a new short-lived access token using the long-lived refresh token. Auto-updates `{{accessToken}}`."
               }
             },
             {
               "name": "Logout User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{accessToken}}",
-                      "type": "string"
-                    }
-                  ]
-                },
                 "method": "POST",
                 "header": [],
                 "url": {
@@ -184,7 +277,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "auth", "logout"]
                 },
-                "description": "Logs out authenticated user."
+                "description": "Invalidates the current refresh token and logs out the user."
               }
             }
           ]
@@ -195,6 +288,7 @@
             {
               "name": "Google OAuth (Browser redirect)",
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -202,7 +296,129 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "auth", "google"]
                 },
-                "description": "Initiates Google OAuth2 consent flow (open in browser)."
+                "description": "Initiates Google OAuth2 PKCE consent flow. Must be opened in a browser — not callable directly from Postman."
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.4 Error Scenarios",
+          "description": "Negative test cases to verify proper error handling and security boundaries.",
+          "item": [
+            {
+              "name": "[Error] Login with Wrong Password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));",
+                      "pm.test('Returns success: false', () => {",
+                      "    pm.expect(pm.response.json().success).to.be.false;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@ambulance.dev\",\n  \"password\": \"WrongPassword!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                },
+                "description": "Expected: `401 Unauthorized` — Invalid email or password."
+              }
+            },
+            {
+              "name": "[Error] Register with Duplicate Email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 409 Conflict', () => pm.response.to.have.status(409));",
+                      "pm.test('Returns success: false', () => {",
+                      "    pm.expect(pm.response.json().success).to.be.false;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Duplicate User\",\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+8801700000001\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                },
+                "description": "Expected: `409 Conflict` — Email already in use."
+              }
+            },
+            {
+              "name": "[Error] Access Protected Route Without Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                },
+                "description": "Expected: `401 Unauthorized` — No Bearer token provided."
+              }
+            },
+            {
+              "name": "[Error] Patient Accessing Admin Route (RBAC)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 403 Forbidden', () => pm.response.to.have.status(403));",
+                      "pm.test('Returns success: false', () => {",
+                      "    pm.expect(pm.response.json().success).to.be.false;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "users"]
+                },
+                "description": "Expected: `403 Forbidden` — Patient token cannot access Admin-only routes. Ensure `{{accessToken}}` is a Patient token before running."
               }
             }
           ]
@@ -211,106 +427,128 @@
     },
     {
       "name": "02. User Module",
+      "description": "User profile management endpoints.",
       "item": [
         {
-          "name": "Get Current User Profile (Me)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+          "name": "02.1 Profile Management",
+          "item": [
+            {
+              "name": "Get Current User Profile (Me)",
+              "event": [
                 {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has user profile fields', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('id');",
+                      "    pm.expect(data).to.have.property('email');",
+                      "    pm.expect(data).to.have.property('role');",
+                      "});"
+                    ]
+                  }
                 }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me"]
-            },
-            "description": "Retrieves the authenticated user's profile details."
-          }
-        },
-        {
-          "name": "Upload Profile Picture / Avatar (Cloudinary)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "avatar",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me/avatar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me", "avatar"]
-            },
-            "description": "Uploads user profile picture via Multer memory stream to Cloudinary and saves the secure URL."
-          }
-        },
-        {
-          "name": "Update Profile (Me)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                },
+                "description": "Retrieves the full profile of the currently authenticated user."
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"+8801799887766\",\n  \"address\": \"Gulshan-2, Dhaka\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "me"]
+            {
+              "name": "Update Profile (Me)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Profile is updated', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('name');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Sultana Patient Updated\",\n  \"phone\": \"+8801799887766\",\n  \"address\": \"Gulshan-2, Dhaka\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                },
+                "description": "Updates name, phone, or address for the authenticated user."
+              }
             },
-            "description": "Updates name, phone, or address for current user."
-          }
+            {
+              "name": "Upload Profile Avatar (Cloudinary)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "avatar",
+                      "type": "file",
+                      "src": [],
+                      "description": "Select an image file (JPG/PNG, max 5MB)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/avatar",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me", "avatar"]
+                },
+                "description": "Uploads user profile picture via Multer to Cloudinary. Returns `avatarUrl` (Cloudinary CDN link). Use `form-data` with key `avatar`."
+              }
+            }
+          ]
         }
       ]
     },
     {
       "name": "03. Ambulance Module",
+      "description": "Ambulance fleet management and directory.",
       "item": [
         {
           "name": "03.1 Public Directory",
           "item": [
             {
               "name": "List Ambulances (Public with Filters)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has ambulances array and meta', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.ambulances).to.be.an('array');",
+                      "    pm.expect(data.meta).to.have.property('total');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -320,15 +558,33 @@
                   "query": [
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "10" },
-                    { "key": "status", "value": "AVAILABLE" }
+                    { "key": "status", "value": "AVAILABLE", "description": "AVAILABLE | DISPATCHED | MAINTENANCE | RETIRED" }
                   ]
                 },
-                "description": "List all ambulances with pagination and status/type filter."
+                "description": "Public endpoint. Lists all ambulances with pagination and optional filters: `status`, `type`."
               }
             },
             {
               "name": "Get Ambulance By ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has ambulance fields', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('vehicleNumber');",
+                      "    pm.expect(data).to.have.property('type');",
+                      "    pm.expect(data).to.have.property('status');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -336,7 +592,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
                 },
-                "description": "Get single ambulance details."
+                "description": "Get full details for a single ambulance including assigned driver info."
               }
             }
           ]
@@ -350,23 +606,23 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Returns ambulance with id', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('id');",
+                      "    pm.expect(data.status).to.equal('AVAILABLE');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.id) {",
-                      "        pm.environment.set('ambulanceId', jsonData.data.id);",
-                      "    }",
+                      "    pm.collectionVariables.set('ambulanceId', pm.response.json().data.id);",
+                      "    pm.environment.set('ambulanceId', pm.response.json().data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -377,16 +633,24 @@
                   "raw": "{{baseUrl}}/api/v1/ambulances",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "ambulances"]
-                }
+                },
+                "description": "Creates a new ambulance. Type must be one of: `BASIC`, `ADVANCED_LIFE_SUPPORT`, `INTENSIVE_CARE`.\n\n**Auto-sets**: `{{ambulanceId}}`"
               }
             },
             {
               "name": "Update Ambulance (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "PATCH",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -397,23 +661,32 @@
                   "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
-                }
+                },
+                "description": "Updates ambulance fields. Status can be: `AVAILABLE`, `DISPATCHED`, `MAINTENANCE`, `RETIRED`."
               }
             },
             {
               "name": "Delete Ambulance (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "DELETE",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/ambulances/{{ambulanceId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "ambulances", "{{ambulanceId}}"]
-                }
+                },
+                "description": "Soft-deletes an ambulance (sets `deletedAt`). The ambulance will no longer appear in listings."
               }
             }
           ]
@@ -422,24 +695,38 @@
     },
     {
       "name": "04. Driver Module",
+      "description": "Driver profile and fleet management endpoints.",
       "item": [
         {
           "name": "04.1 Driver Profile",
           "item": [
             {
               "name": "Get My Driver Profile (DRIVER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has driver profile', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('licenseNumber');",
+                      "    pm.expect(data).to.have.property('isAvailable');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/drivers/me",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "drivers", "me"]
-                }
+                },
+                "description": "Returns the driver profile for the currently authenticated Driver user."
               }
             }
           ]
@@ -449,11 +736,23 @@
           "item": [
             {
               "name": "List Drivers (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has drivers array and meta', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.drivers).to.be.an('array');",
+                      "    pm.expect(data.meta).to.have.property('total');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -463,50 +762,54 @@
                   "query": [
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "10" },
-                    { "key": "isAvailable", "value": "true" }
+                    { "key": "isAvailable", "value": "true", "description": "true | false" }
                   ]
-                }
+                },
+                "description": "Lists all registered drivers. Filter by `isAvailable` to find available ones for dispatch."
               }
             },
             {
               "name": "Get Driver By ID (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "drivers", "{{driverId}}"]
-                }
+                },
+                "description": "Returns full driver details including ambulance assignment and user info."
               }
             },
             {
-              "name": "Register Driver (ADMIN)",
+              "name": "Register Driver (ADMIN) [Link Existing User]",
               "event": [
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.id) {",
-                      "        pm.environment.set('driverId', jsonData.data.id);",
-                      "    }",
+                      "    pm.collectionVariables.set('driverId', pm.response.json().data.id);",
+                      "    pm.environment.set('driverId', pm.response.json().data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -517,16 +820,24 @@
                   "raw": "{{baseUrl}}/api/v1/drivers",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "drivers"]
-                }
+                },
+                "description": "Links an **existing user** account to a Driver profile and upgrades their role to `DRIVER`. Use this when promoting an existing user.\n\nFor creating a brand-new Driver in one step, use **`08. Admin Module → Create Driver (Admin Direct Onboarding)`** instead."
               }
             },
             {
               "name": "Update Driver (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "PATCH",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -537,23 +848,32 @@
                   "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "drivers", "{{driverId}}"]
-                }
+                },
+                "description": "Updates driver availability, license number, or ambulance assignment."
               }
             },
             {
               "name": "Delete Driver (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "DELETE",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/drivers/{{driverId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "drivers", "{{driverId}}"]
-                }
+                },
+                "description": "Soft-deletes the driver profile (sets `deletedAt`)."
               }
             }
           ]
@@ -562,13 +882,29 @@
     },
     {
       "name": "05. Hospital Module",
+      "description": "Hospital directory and management.",
       "item": [
         {
           "name": "05.1 Public Directory",
           "item": [
             {
               "name": "List Hospitals (Public with Name Search)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has hospitals array', () => {",
+                      "    pm.expect(pm.response.json().data.hospitals).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -578,14 +914,27 @@
                   "query": [
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "10" },
-                    { "key": "name", "value": "dhaka" }
+                    { "key": "name", "value": "dhaka", "description": "Case-insensitive name search" }
                   ]
-                }
+                },
+                "description": "Public endpoint. Lists all registered hospitals with optional name search."
               }
             },
             {
               "name": "Get Hospital By ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -606,23 +955,18 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.id) {",
-                      "        pm.environment.set('hospitalId', jsonData.data.id);",
-                      "    }",
+                      "    pm.collectionVariables.set('hospitalId', pm.response.json().data.id);",
+                      "    pm.environment.set('hospitalId', pm.response.json().data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -633,16 +977,24 @@
                   "raw": "{{baseUrl}}/api/v1/hospitals",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "hospitals"]
-                }
+                },
+                "description": "Creates a new hospital in the system. Auto-sets `{{hospitalId}}`."
               }
             },
             {
               "name": "Update Hospital (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "PATCH",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -658,11 +1010,18 @@
             },
             {
               "name": "Delete Hospital (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "DELETE",
                 "header": [],
                 "url": {
@@ -678,6 +1037,7 @@
     },
     {
       "name": "06. Emergency Request Module",
+      "description": "Emergency request lifecycle — creation, tracking, and cancellation.",
       "item": [
         {
           "name": "06.1 Patient Operations",
@@ -688,23 +1048,24 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Request is created with PENDING status', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.status).to.equal('PENDING');",
+                      "    pm.expect(data).to.have.property('id');",
+                      "    pm.expect(data).to.have.property('pickupAddress');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.id) {",
-                      "        pm.environment.set('requestId', jsonData.data.id);",
-                      "    }",
+                      "    pm.collectionVariables.set('requestId', pm.response.json().data.id);",
+                      "    pm.environment.set('requestId', pm.response.json().data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -715,16 +1076,27 @@
                   "raw": "{{baseUrl}}/api/v1/requests",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "requests"]
-                }
+                },
+                "description": "Creates a new emergency request. Priority: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.\n\n**Auto-sets**: `{{requestId}}`\n\n**Note**: Payment is only unlocked once status reaches `DISPATCHED` or `COMPLETED`."
               }
             },
             {
               "name": "Get My Requests (PATIENT)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has requests array', () => {",
+                      "    pm.expect(pm.response.json().data.requests).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -735,39 +1107,62 @@
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "10" }
                   ]
-                }
+                },
+                "description": "Returns all emergency requests created by the authenticated Patient."
               }
             },
             {
-              "name": "Get Request By ID (Auth)",
+              "name": "Get Request By ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has status field', () => {",
+                      "    pm.expect(pm.response.json().data).to.have.property('status');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "requests", "{{requestId}}"]
-                }
+                },
+                "description": "Returns the full details of a single request including dispatch and payment info."
               }
             },
             {
               "name": "Cancel Request (PATIENT / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Request is cancelled', () => {",
+                      "    pm.expect(pm.response.json().data.status).to.equal('CANCELLED');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "PATCH",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}/cancel",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "requests", "{{requestId}}", "cancel"]
-                }
+                },
+                "description": "Cancels a PENDING emergency request. Cannot cancel a request that has already been dispatched."
               }
             }
           ]
@@ -777,11 +1172,23 @@
           "item": [
             {
               "name": "List All Requests (ADMIN with Filters)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has requests array and meta', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.requests).to.be.an('array');",
+                      "    pm.expect(data.meta).to.have.property('total');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -791,9 +1198,10 @@
                   "query": [
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "10" },
-                    { "key": "status", "value": "PENDING" }
+                    { "key": "status", "value": "PENDING", "description": "PENDING | DISPATCHED | COMPLETED | CANCELLED" }
                   ]
-                }
+                },
+                "description": "Admin view of all emergency requests. Filter by `status` or `priority`."
               }
             }
           ]
@@ -802,6 +1210,7 @@
     },
     {
       "name": "07. Dispatch Module",
+      "description": "Ambulance dispatch management and trip status lifecycle.",
       "item": [
         {
           "name": "07.1 Dispatch Creation & Details",
@@ -812,23 +1221,25 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Dispatch is created with ASSIGNED status', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('id');",
+                      "    pm.expect(data).to.have.property('requestId');",
+                      "    pm.expect(data).to.have.property('ambulanceId');",
+                      "    pm.expect(data).to.have.property('driverId');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.id) {",
-                      "        pm.environment.set('dispatchId', jsonData.data.id);",
-                      "    }",
+                      "    pm.collectionVariables.set('dispatchId', pm.response.json().data.id);",
+                      "    pm.environment.set('dispatchId', pm.response.json().data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -839,42 +1250,59 @@
                   "raw": "{{baseUrl}}/api/v1/dispatches",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "dispatches"]
-                }
+                },
+                "description": "Assigns an ambulance and driver to a PENDING emergency request.\n\n**Side effects**:\n- Emergency request status: `PENDING` → `DISPATCHED`\n- Ambulance status: `AVAILABLE` → `DISPATCHED`\n- Driver: `isAvailable: true` → `false`\n\n**Auto-sets**: `{{dispatchId}}`"
               }
             },
             {
               "name": "Get Dispatch By ID (ADMIN / DRIVER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "dispatches", "{{dispatchId}}"]
-                }
+                },
+                "description": "Returns full dispatch details including ambulance, driver, and request info."
               }
             }
           ]
         },
         {
           "name": "07.2 Trip Status Transitions",
+          "description": "Valid status progression: `ASSIGNED` → `EN_ROUTE` → `ON_SCENE` → `TRANSPORTING` → `COMPLETED`",
           "item": [
             {
-              "name": "Update Dispatch Status (DRIVER / ADMIN)",
+              "name": "Update Dispatch Status — EN_ROUTE (DRIVER / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "PATCH",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"EN_ROUTE\",\n  \"note\": \"Driver has departed to pickup location\"\n}"
+                  "raw": "{\n  \"status\": \"EN_ROUTE\",\n  \"note\": \"Ambulance has departed to pickup location\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
@@ -884,12 +1312,49 @@
               }
             },
             {
-              "name": "Complete Dispatch (DRIVER / ADMIN)",
+              "name": "Update Dispatch Status — ON_SCENE (DRIVER / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ON_SCENE\",\n  \"note\": \"Ambulance has arrived at patient location\"\n}"
                 },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Complete Dispatch — COMPLETED (DRIVER / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Dispatch is completed', () => {",
+                      "    pm.expect(pm.response.json().data.status).to.equal('COMPLETED');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
                 "method": "PATCH",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -900,7 +1365,8 @@
                   "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
-                }
+                },
+                "description": "Marks dispatch as COMPLETED. Emergency request transitions to COMPLETED. Ambulance returns to AVAILABLE."
               }
             }
           ]
@@ -909,17 +1375,71 @@
     },
     {
       "name": "08. Admin Module",
+      "description": "Admin-only system management: user onboarding, role management, audit logs, and system stats.",
       "item": [
         {
           "name": "08.1 User Administration",
           "item": [
             {
-              "name": "List Users (ADMIN with Search/Filter)",
+              "name": "Create Driver (Admin Direct Onboarding)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Returns user with DRIVER role and driver profile', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.user.role).to.equal('DRIVER');",
+                      "    pm.expect(data.driver).to.have.property('licenseNumber');",
+                      "    pm.expect(data.driver).to.have.property('id');",
+                      "});",
+                      "if (pm.response.code === 201) {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.collectionVariables.set('driverId', data.driver.id);",
+                      "    pm.collectionVariables.set('driverUserId', data.user.id);",
+                      "    pm.environment.set('driverId', data.driver.id);",
+                      "    pm.environment.set('driverUserId', data.user.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Kabir Driver\",\n  \"email\": \"kabir.driver@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+8801722233344\",\n  \"licenseNumber\": \"DL-DHAKA-2024-5544\"\n}"
                 },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/drivers",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "drivers"]
+                },
+                "description": "Creates a new User (with `role: DRIVER`) and a Driver profile in a single atomic transaction. The driver can immediately log in with the provided credentials.\n\n**Auto-sets**: `{{driverId}}`, `{{driverUserId}}`"
+              }
+            },
+            {
+              "name": "List Users (ADMIN with Search/Filter)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has users array and meta', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.users).to.be.an('array');",
+                      "    pm.expect(data.meta).to.have.property('total');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -929,18 +1449,30 @@
                   "query": [
                     { "key": "page", "value": "1" },
                     { "key": "limit", "value": "10" },
-                    { "key": "role", "value": "PATIENT" }
+                    { "key": "role", "value": "PATIENT", "description": "Filter by role: PATIENT | DRIVER | ADMIN" },
+                    { "key": "search", "value": "", "disabled": true, "description": "Search by name or email" }
                   ]
-                }
+                },
+                "description": "Returns all users with pagination. Filter by `role` or full-text search by `search`."
               }
             },
             {
               "name": "Update User Role (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Role is updated', () => {",
+                      "    pm.expect(pm.response.json().data).to.have.property('role');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "PATCH",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -951,23 +1483,32 @@
                   "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}/role",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "admin", "users", "{{targetUserId}}", "role"]
-                }
+                },
+                "description": "Promotes or demotes a user's role. Valid roles: `PATIENT`, `DRIVER`, `ADMIN`.\n\nSet `{{targetUserId}}` to the user's UUID before calling."
               }
             },
             {
               "name": "Soft Delete User (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "DELETE",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "admin", "users", "{{targetUserId}}"]
-                }
+                },
+                "description": "Soft-deletes the user account (sets `deletedAt` and `isActive: false`). Cannot delete your own account."
               }
             }
           ]
@@ -977,11 +1518,21 @@
           "item": [
             {
               "name": "View Audit Logs (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Response has logs array', () => {",
+                      "    pm.expect(pm.response.json().data.logs).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -990,18 +1541,35 @@
                   "path": ["api", "v1", "admin", "audit-logs"],
                   "query": [
                     { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "20" }
+                    { "key": "limit", "value": "20" },
+                    { "key": "entityType", "value": "", "disabled": true, "description": "Filter by: User | Driver | Ambulance | Dispatch" }
                   ]
-                }
+                },
+                "description": "Returns system audit trail. Records all `CREATE`, `UPDATE`, `DELETE`, and `UPDATE_ROLE` actions with the admin actor's ID."
               }
             },
             {
               "name": "Get Dashboard Statistics (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Stats have expected shape', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('users');",
+                      "    pm.expect(data).to.have.property('ambulances');",
+                      "    pm.expect(data).to.have.property('requests');",
+                      "    pm.expect(data).to.have.property('payments');",
+                      "    pm.expect(data.payments).to.have.property('totalRevenue');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -1009,7 +1577,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "admin", "stats"]
                 },
-                "description": "Returns system metrics: total users, drivers, ambulance availability breakdown, emergency request status counts, and total revenue."
+                "description": "Returns live system metrics: total users/drivers, ambulance availability breakdown, emergency request status counts, and total revenue in BDT."
               }
             }
           ]
@@ -1018,17 +1586,29 @@
     },
     {
       "name": "09. Payment Module",
+      "description": "Multi-gateway payment processing: Stripe, bKash Tokenized PGW, and SSLCommerz.\n\n**Payment Rules**:\n- Payment is only allowed when request status is `DISPATCHED` or `COMPLETED`.\n- Duplicate payments on a successful request return `409 Conflict`.\n- On payment success, request status transitions to `COMPLETED`.",
       "item": [
         {
           "name": "09.1 Common / Status",
           "item": [
             {
               "name": "Get Payment Status (PATIENT / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Payment has status field', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED']).to.include(data.status);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -1036,7 +1616,38 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "{{requestId}}"]
                 },
-                "description": "Returns the Payment record for a given emergency request. Status will be PENDING, SUCCESS, FAILED, or REFUNDED across any gateway."
+                "description": "Returns the payment record for a given emergency request. Status: `PENDING`, `SUCCESS`, `FAILED`, `REFUNDED`."
+              }
+            },
+            {
+              "name": "[Error] Pay for PENDING Request",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+                      "pm.test('Returns payment not allowed error', () => {",
+                      "    pm.expect(pm.response.json().success).to.be.false;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"requestId\": \"{{requestId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/payments/bkash/create",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "payments", "bkash", "create"]
+                },
+                "description": "Expected: `400 Bad Request` — payment is only allowed for DISPATCHED or COMPLETED requests. Run this **before** dispatching to verify the guard."
               }
             }
           ]
@@ -1050,56 +1661,57 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Returns Stripe checkout URL', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.checkoutUrl).to.include('stripe.com');",
+                      "    pm.expect(data.sessionId).to.be.a('string');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.sessionId) {",
-                      "        pm.environment.set('paymentSessionId', jsonData.data.sessionId);",
-                      "        console.log('Stripe Checkout URL:', jsonData.data.checkoutUrl);",
-                      "    }",
+                      "    pm.collectionVariables.set('paymentSessionId', pm.response.json().data.sessionId);",
+                      "    pm.environment.set('paymentSessionId', pm.response.json().data.sessionId);",
+                      "    console.log('Open in browser:', pm.response.json().data.checkoutUrl);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"amount\": 1500,\n  \"currency\": \"bdt\"\n}"
+                  "raw": "{\n  \"requestId\": \"{{requestId}}\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/payments/stripe/checkout",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "stripe", "checkout"]
                 },
-                "description": "Creates a Stripe Checkout session for an emergency request. The response contains a `checkoutUrl` — open it in the browser to complete payment. Use Stripe test card: 4242 4242 4242 4242, any future date, any CVV."
+                "description": "Creates a Stripe Checkout Session for the emergency request. Returns `checkoutUrl` to open in browser and `sessionId`.\n\n**Test card**: `4242 4242 4242 4242`, any future date, any CVC.\n\n**Note**: Stripe requires the webhook listener to confirm payment. Run `stripe listen --forward-to localhost:5000/api/v1/payments/stripe/webhook` locally."
               }
             },
             {
-              "name": "Stripe Webhook (Simulate — for local dev)",
+              "name": "Stripe Webhook (Local Test via CLI)",
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "POST",
                 "header": [
                   { "key": "Content-Type", "value": "application/json" },
-                  { "key": "stripe-signature", "value": "{{stripeWebhookSignature}}", "description": "Generated by Stripe CLI: stripe listen --forward-to localhost:5000/api/v1/payments/stripe/webhook" }
+                  { "key": "stripe-signature", "value": "{{stripeWebhookSignature}}", "description": "Generated by Stripe CLI" }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"type\": \"checkout.session.completed\"\n}"
+                  "raw": "{\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_mock\",\n      \"metadata\": { \"requestId\": \"{{requestId}}\" },\n      \"payment_status\": \"paid\"\n    }\n  }\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/payments/stripe/webhook",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "stripe", "webhook"]
                 },
-                "description": "This endpoint is called by Stripe when payment events occur. Test locally using:\n```\nstripe listen --forward-to localhost:5000/api/v1/payments/stripe/webhook\n```\nTrigger test events with:\n```\nstripe trigger checkout.session.completed\n```"
+                "description": "This endpoint is called by Stripe. Test locally via:\n```\nstripe listen --forward-to localhost:5000/api/v1/payments/stripe/webhook\nstripe trigger checkout.session.completed\n```"
               }
             }
           ]
@@ -1113,24 +1725,24 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Returns bKash checkout URL and paymentID', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.bkashURL).to.be.a('string');",
+                      "    pm.expect(data.paymentID).to.be.a('string');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.paymentID) {",
-                      "        pm.environment.set('bkashPaymentID', jsonData.data.paymentID);",
-                      "        console.log('bKash Checkout URL:', jsonData.data.bkashURL);",
-                      "    }",
+                      "    pm.collectionVariables.set('bkashPaymentID', pm.response.json().data.paymentID);",
+                      "    pm.environment.set('bkashPaymentID', pm.response.json().data.paymentID);",
+                      "    console.log('bKash URL:', pm.response.json().data.bkashURL);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -1142,16 +1754,28 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "bkash", "create"]
                 },
-                "description": "Creates a bKash Tokenized Checkout payment. Response returns `bkashURL` to redirect the user to bKash Sandbox PGW interface.\n\nTest Wallet: `01770618575` | OTP: `123456` | PIN: `12121`"
+                "description": "Creates a bKash Tokenized Checkout payment. Returns `bkashURL` to redirect user.\n\n**Sandbox credentials**:\n- Wallet: `01770618575`\n- OTP: `123456`\n- PIN: `12121`\n\n**Auto-sets**: `{{bkashPaymentID}}`"
               }
             },
             {
               "name": "Execute bKash Payment (PATIENT)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Payment is successful', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.status).to.equal('SUCCESS');",
+                      "    pm.expect(data).to.have.property('transactionId');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -1163,7 +1787,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "bkash", "execute"]
                 },
-                "description": "Executes/Captures the bKash payment once OTP/PIN is confirmed, returning the transaction ID (`trxID`) and marking the request COMPLETED."
+                "description": "Executes and captures the bKash payment after OTP/PIN confirmation. Returns `trxID` (transaction ID) and marks the emergency request as `COMPLETED`."
               }
             }
           ]
@@ -1177,40 +1801,40 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
+                      "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                      "pm.test('Returns gateway page URL', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data.gatewayPageURL).to.be.a('string');",
+                      "    pm.expect(data.gatewayPageURL).to.include('sslcommerz');",
+                      "});",
                       "if (pm.response.code === 201) {",
-                      "    var jsonData = pm.response.json();",
-                      "    if (jsonData.data && jsonData.data.gatewayPageURL) {",
-                      "        console.log('SSLCommerz Gateway URL:', jsonData.data.gatewayPageURL);",
-                      "    }",
+                      "    console.log('Open in browser:', pm.response.json().data.gatewayPageURL);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ],
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
-                },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"amount\": 2500\n}"
+                  "raw": "{\n  \"requestId\": \"{{requestId}}\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/payments/sslcommerz/initiate",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "sslcommerz", "initiate"]
                 },
-                "description": "Initializes an SSLCommerz hosted checkout session. Returns `gatewayPageURL` which the patient opens to pay via Cards, Mobile Banking (bKash/Nagad/Rocket), or Net Banking."
+                "description": "Initiates an SSLCommerz payment session. Returns `gatewayPageURL` — open in browser to complete payment.\n\n**Sandbox Store**: `emerg6a993ce356e43`\n\nSelect any test card or sandbox bKash on the gateway page and click **Confirm Payment**."
               }
             },
             {
               "name": "SSLCommerz Success Callback (Simulate)",
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -1225,12 +1849,13 @@
                     { "key": "requestId", "value": "{{requestId}}" }
                   ]
                 },
-                "description": "Simulates browser return after successful SSLCommerz payment. Server validates the transaction via SSLCommerz Validation API and marks request COMPLETED."
+                "description": "Simulates browser return after successful SSLCommerz payment. Server validates via SSLCommerz Validation API and marks request COMPLETED."
               }
             },
             {
               "name": "SSLCommerz IPN Notification (Webhook)",
               "request": {
+                "auth": { "type": "noauth" },
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
@@ -1242,7 +1867,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "payments", "sslcommerz", "ipn"]
                 },
-                "description": "Background Instant Payment Notification sent by SSLCommerz server to verify and finalize transactions asynchronously."
+                "description": "Background Instant Payment Notification sent by SSLCommerz to verify and finalize transactions asynchronously. Configure IPN URL in SSLCommerz Merchant Panel."
               }
             }
           ]
@@ -1251,65 +1876,18 @@
     }
   ],
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:5000",
-      "type": "string"
-    },
-    {
-      "key": "accessToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refreshToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "ambulanceId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "driverId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "hospitalId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "requestId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dispatchId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "targetUserId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "paymentSessionId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "stripeWebhookSignature",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "bkashPaymentID",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "ambulanceId", "value": "", "type": "string" },
+    { "key": "driverId", "value": "", "type": "string" },
+    { "key": "driverUserId", "value": "", "type": "string" },
+    { "key": "hospitalId", "value": "", "type": "string" },
+    { "key": "requestId", "value": "", "type": "string" },
+    { "key": "dispatchId", "value": "", "type": "string" },
+    { "key": "targetUserId", "value": "", "type": "string" },
+    { "key": "paymentSessionId", "value": "", "type": "string" },
+    { "key": "stripeWebhookSignature", "value": "", "type": "string" },
+    { "key": "bkashPaymentID", "value": "", "type": "string" }
   ]
 }
