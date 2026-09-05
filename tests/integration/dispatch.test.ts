@@ -14,7 +14,7 @@ describe("Dispatch Module Integration Tests", () => {
   let dispatchId = "";
 
   it("Setup: Create Admin, Driver, Patient and an active Dispatch", async () => {
-    const passwordHash = await bcrypt.hash("Password123", 12);
+    const passwordHash = await bcrypt.hash("Password123", 10);
 
     // 1. Create Admin
     const adminUser = await prisma.user.create({
