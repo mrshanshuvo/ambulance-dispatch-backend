@@ -1,208 +1,215 @@
-# 🎬 Video Presentation Script: Emergency Ambulance Dispatch System
+# 🎙️ Video Recording Script: Emergency Ambulance Dispatch System
 
-**Target Duration:** 7 – 9 minutes  
-**Language:** English (Clear, confident, conversational)  
-**Tools open before starting:**
-
-1. Browser showing **GitHub Repo & Live URL /health**
-2. **VS Code** showing clean project architecture (`src/modules`)
-3. **Postman** with the imported collection `Emergency Ambulance Dispatch System API`
+**Target Time:** ~7 Minutes 30 Seconds  
+**Prerequisites to keep open before recording:**
+1. **Browser Tab:** `https://ambulance-dispatch-backend-66f2.onrender.com/health`
+2. **VS Code:** Project root opened with file tree visible
+3. **Postman:** `Emergency Ambulance Dispatch System API` collection imported
 
 ---
 
 ## ⏱️ Timeline Cheat-Sheet
 
-| Timestamp       | Topic                                                     | Screen / Tool                   |
-| :-------------- | :-------------------------------------------------------- | :------------------------------ |
-| **0:00 – 1:15** | 1. Introduction & Clean Architecture                      | Browser & VS Code               |
-| **1:15 – 2:45** | 2. Three Roles & RBAC Protection (403 Demo)               | Postman                         |
-| **2:45 – 4:00** | 3. Core Workflow & CRUD (Dispatch Engine)                 | Postman                         |
-| **4:00 – 5:15** | 4. Zod Validation & Global Error Handling (422, 401, 404) | Postman                         |
-| **5:15 – 6:45** | 5. Payment Flow (Stripe, bKash & SSLCommerz)              | Postman & Browser               |
-| **6:45 – 8:00** | 6. Technical Challenge Solved (Double-Booking & Redis)    | VS Code (`dispatch.service.ts`) |
-| **8:00 – 8:30** | 7. Automated Testing Suite & Conclusion                   | Terminal (`npm test`)           |
+| Timestamp | Topic | Screen / Tool |
+| :--- | :--- | :--- |
+| **0:00 – 1:00** | 1. Introduction & Architecture | Browser & VS Code |
+| **1:00 – 2:30** | 2. Role-Based Access Demo (403 Forbidden) | Postman |
+| **2:30 – 4:15** | 3. CRUD Operations Demo (Ambulance Resource) | Postman |
+| **4:15 – 5:15** | 4. Validation & Error Handling Demo (422, 404, 401) | Postman |
+| **5:15 – 6:30** | 5. Payment Flow Demo (Stripe & Webhook) | Postman & Browser |
+| **6:30 – 7:30** | 6. Technical Challenge (Race Conditions & Double-Booking) | VS Code (`dispatch.service.ts`) |
+| **7:30 – 8:00** | 7. Automated Tests & Wrap-Up | Terminal (`npm test`) |
 
 ---
 
-## 🎬 Part 1: Project Overview & Architecture (0:00 – 1:15)
+## 1. Introduction & Architecture (45–60 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> Start on the browser showing the live `/health` endpoint on Render. Then switch to VS Code with the file explorer open showing `src/modules`.
 
-> Open the browser on the deployed URL: `https://ambulance-dispatch-backend-66f2.onrender.com/health` and then switch to VS Code folder structure.
-
-### 🗣️ What to Say:
-
-> "Hello everyone! Welcome to the demonstration of the **Emergency Ambulance Dispatch System Backend API**.
+### 🗣️ What I say:
+> "Hello everyone. Welcome to the demo of the Emergency Ambulance Dispatch System API.
 >
-> In high-stress medical emergencies, seconds matter. A delayed or disorganized dispatch can cost lives. This backend solves that critical problem by providing an automated, atomic dispatch engine that pairs patients in distress with the closest available ambulance and driver, transitions through a 6-stage trip status machine, and processes medical transportation fares through multi-channel payment gateways.
+> In medical emergencies, manual dispatch is slow and prone to human error. This backend solves that problem. It automates emergency requests, pairs patients with ambulances and drivers, tracks trip progress in real-time, and handles payments.
 >
-> The project is deployed live on **Render**, backed by a serverless PostgreSQL database on **Neon**, with **Redis Cloud** for performance caching.
+> The API is live on Render, connected to a Neon PostgreSQL database and Redis Cloud.
 >
-> _(Switch to VS Code)_  
-> Looking at the codebase, I followed the industry-standard **Clean Layered Modular Architecture**:
+> Let's look at the architecture in VS Code.
 >
-> - Each feature lives in its own module inside `src/modules`—like `auth`, `ambulance`, `driver`, `dispatch`, and `payment`.
-> - The flow strictly follows **Routes → Middlewares (Auth, RBAC, Validation) → Controllers → Services → Prisma ORM**.
-> - Services handle pure business logic, keeping controllers lean and highly testable."
+> I built this backend using a clean, layered modular pattern.
+>
+> First, **Routes** define endpoints and apply authentication, RBAC, and Zod validation.  
+> Second, **Controllers** parse incoming requests and send unified JSON responses.  
+> Third, **Services** hold all the core business logic.  
+> And fourth, **Prisma ORM** interacts directly with our PostgreSQL database with full type safety.
+>
+> This separation keeps the codebase clean, modular, and easy to maintain."
 
 ---
 
-## 🎬 Part 2: Demonstrate All 3 Roles & RBAC (1:15 – 2:45)
+## 2. Role-Based Access Demo (60–90 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> Switch to Postman. Open `01. Auth Module`. Show `Admin Login`, `Patient Login`, then send an Admin-only request using the Patient token.
 
-> Open **Postman**. Go to folder `01. Auth Module`.
-
-### 🗣️ What to Say:
-
-> "Our system enforces strict **Role-Based Access Control** with three distinct roles:
+### 🗣️ What I say:
+> "Now let's look at Role-Based Access Control.
 >
-> 1. **PATIENT**: The public caller requesting help.
-> 2. **DRIVER**: The first responder navigating the ambulance.
-> 3. **ADMIN**: The central dispatcher and fleet manager.
+> We have three distinct roles: `PATIENT`, `DRIVER`, and `ADMIN`.
 >
-> Let's test this in Postman.
+> First, I will log in as an `ADMIN`.  
+> *[Click Send on 'Admin Login']*  
+> We get our JWT access token. My test script automatically saves this token in Postman.
 >
-> First, I will login as **ADMIN** (`admin@ambulance.dev` with `Admin@123`).  
-> _(Click Send on 'Admin Login')_  
-> Notice that the test script instantly captures the JWT Access Token and stores it in our Postman collection variables.
+> As an Admin, I have full permissions. Let's fetch the system statistics.  
+> *[Send 'GET /api/v1/admin/stats']*  
+> Status 200 OK. The Admin can see fleet metrics and revenue.
 >
-> Now, as an Admin, I can view system dashboard analytics:  
-> _(Send 'GET /api/v1/admin/stats')_  
-> We get our full fleet overview with cached responses from Redis.
+> Now, let's switch users. I will log in as a `PATIENT`.  
+> *[Click Send on 'Patient Login']*  
+> The active token is now updated to the Patient.
 >
-> Next, let's login as a **PATIENT** (`patient1@ambulance.dev`).  
-> _(Click Send on 'Patient Login')_  
-> Now the collection variable holds the Patient's token.
+> Let's see what happens if this Patient tries to access an Admin endpoint, like toggling a user's active status.  
+> *[Send 'PATCH /api/v1/admin/users/{{targetUserId}}/status']*  
+> Look at the response: **HTTP 403 Forbidden**. Message: 'Forbidden: Insufficient permissions'.
 >
-> Now, what happens if this Patient maliciously tries to call an Admin endpoint, like accessing all users or toggling user status?  
-> _(Send 'GET /api/v1/admin/users' or 'PATCH /api/v1/admin/users/:id/status')_  
-> **Boom: HTTP 403 Forbidden.** Our `authorize('ADMIN')` middleware intercepts the request and safely blocks unauthorized role escalation."
+> Our RBAC middleware checks the role stored inside the verified JWT on every single protected route. If the role doesn't match, it blocks the request immediately."
 
 ---
 
-## 🎬 Part 3: Demonstrate CRUD & Core Dispatch Flow (2:45 – 4:00)
+## 3. CRUD Operations Demo (90–120 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> In Postman, execute these 4 requests in order:
+> 1. `POST /api/v1/ambulances`
+> 2. `GET /api/v1/ambulances`
+> 3. `PATCH /api/v1/ambulances/:id`
+> 4. `DELETE /api/v1/ambulances/:id`
 
-> Postman: `06. Emergency Request Module` → `07. Dispatch Module`.
-
-### 🗣️ What to Say:
-
-> "Now let's demonstrate meaningful CRUD operations across the core dispatch lifecycle.
+### 🗣️ What I say:
+> "Now let's demonstrate full CRUD operations using our Ambulance resource. I will switch back to my Admin token.
 >
-> **Step 1: Patient creates an Emergency Request.**  
-> _(Open 'Create Emergency Request', send)_  
-> The patient sends their pickup coordinates and priority: `CRITICAL`. We receive a **201 Created** with the generated `requestId`.
+> **First, CREATE with POST.**  
+> *[Send 'POST /api/v1/ambulances']*  
+> I send vehicle number 'AMB-TEST-99', type 'ADVANCED_LIFE_SUPPORT', and status 'AVAILABLE'.  
+> Status 201 Created. The new ambulance is created with a generated UUID, and our test script saves its ID.
 >
-> **Step 2: Admin Dispatches Ambulance & Driver.**  
-> _(Login as Admin or switch to Admin token, then send 'Dispatch Ambulance')_  
-> Here, the Admin assigns an ambulance and a driver. In a single atomic database operation, the request status becomes `DISPATCHED`, and both the ambulance and driver availability statuses are locked.
+> **Second, READ with GET.**  
+> *[Send 'GET /api/v1/ambulances?page=1&limit=10']*  
+> Status 200 OK. We get a paginated list of ambulances along with pagination metadata: page, limit, total, and totalPages.
 >
-> **Step 3: Driver Views & Advances Trip Status.**  
-> _(Login as Driver `driver1@ambulance.dev`, send 'Get Driver Active Dispatch')_  
-> The driver can immediately fetch their ongoing active trip without digging through logs.
+> **Third, UPDATE with PATCH.**  
+> *[Send 'PATCH /api/v1/ambulances/{{ambulanceId}}' with body `{"status": "MAINTENANCE"}`]*  
+> Status 200 OK. The status changes to 'MAINTENANCE'. We also log this update in our `AuditLog` table.
 >
-> Then, the driver updates trip progression:  
-> _(Send 'Update Trip Status' with `status: EN_ROUTE`, then `PATIENT_PICKUP`, then `COMPLETED`)_  
-> Each transition writes to our `TripStatusLog` timeline table, providing complete accountability."
+> **Fourth, DELETE.**  
+> *[Send 'DELETE /api/v1/ambulances/{{ambulanceId}}']*  
+> Status 200 OK. We do not hard delete records. We use soft deletes. The API sets a `deletedAt` timestamp.  
+> If we fetch this ambulance again, the backend automatically filters it out."
 
 ---
 
-## 🎬 Part 4: Validation & Structured Error Handling (4:00 – 5:15)
+## 4. Validation & Error Handling Demo (45–60 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> In Postman:
+> 1. Send `POST /api/v1/auth/register` with an invalid email.
+> 2. Send `GET /api/v1/ambulances/invalid-uuid`.
+> 3. Send a request with no Authorization header.
 
-> Postman: Intentionally send bad requests.
-
-### 🗣️ What to Say:
-
-> "A production-grade API must fail gracefully and provide readable feedback. We use **Zod** for schema validation on request bodies, params, and query filters.
+### 🗣️ What I say:
+> "Next, let's look at validation and error handling.
 >
-> Let's test a validation failure intentionally:  
-> _(Open 'Register User', change email to `"not-an-email"`, or send a dispatch with invalid status)_  
-> _(Click Send)_  
-> Look at the response: **HTTP 422 Unprocessable Entity**. It returns a clean JSON error structure with the specific field that failed and a human-readable message.
+> I use **Zod** to validate request bodies, URL params, and query filters before they ever hit the controllers.
 >
-> Let's test an authentication failure:  
-> _(Remove or corrupt Bearer token in headers, send request)_  
-> We receive **HTTP 401 Unauthorized: Invalid or expired token**.
+> Let's test a validation error. I will send a registration request with an invalid email address.  
+> *[Send 'POST /api/v1/auth/register' with `"email": "not-an-email"`]*  
+> Status **422 Unprocessable Entity**. The response returns a clean error array showing the exact field 'body.email' and the message 'Invalid email address'.
 >
-> And if someone queries a resource that doesn't exist:  
-> _(Send request with a non-existent UUID)_  
-> We receive **HTTP 404 Not Found**. All errors are funneled through our centralized Express error handling middleware."
+> Now let's trigger a **404 Not Found**. I will query an ambulance using a non-existent UUID.  
+> *[Send request with fake UUID]*  
+> Status **404 Not Found**. We get a clean, standardized error message.
+>
+> Finally, let's trigger a **401 Unauthorized** by removing the Bearer token entirely.  
+> *[Disable Authorization header and send]*  
+> Status **401 Unauthorized**.
+>
+> All errors pass through our centralized `errorHandler` middleware. This guarantees a consistent JSON format across the entire API."
 
 ---
 
-## 🎬 Part 5: Multi-Gateway Payment Flow (5:15 – 6:45)
+## 5. Payment Flow Demo (60–90 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> In Postman:
+> 1. Show `GET /api/v1/payments/fare/:requestId`.
+> 2. Send `POST /api/v1/payments/stripe/checkout`.
+> 3. Copy `checkoutUrl`, open it in the browser, show the Stripe test page.
+> 4. Send the Stripe Webhook request in Postman.
+> 5. Show `GET /api/v1/payments/:requestId` showing `SUCCESS`.
 
-> Postman: `09. Payment Module` + browser tab for Stripe / bKash.
-
-### 🗣️ What to Say:
-
-> "Now let's look at the financial settlement. Once a trip is completed, the patient needs to pay. We support a **Tri-Gateway architecture**: Stripe for international cards, bKash Tokenized Checkout, and SSLCommerz for local Bangladesh payments.
+### 🗣️ What I say:
+> "Now let's look at the payment flow.
 >
-> Let's look at the **Dynamic Fare Estimate**:  
-> _(Send 'GET /api/v1/payments/fare/:requestId')_  
-> The system calculates the base fare, ambulance type surcharge, and distance-based rate.
+> Once an ambulance completes a trip, the patient pays.
 >
-> Now, let's initiate a **Stripe Checkout**:  
-> _(Send 'POST /api/v1/payments/stripe/checkout')_  
-> The API creates a payment record in `PENDING` state and returns a hosted Stripe `checkoutUrl`.  
-> _(Open checkoutUrl in browser, show test card entry)_  
-> When the checkout completes, Stripe sends an event to our signed webhook endpoint `/api/v1/payments/stripe/webhook`, which cryptographically validates the Stripe signature, marks the payment `SUCCESS`, and updates the emergency request to `COMPLETED`.
+> First, the patient requests a fare calculation.  
+> *[Send 'GET /api/v1/payments/fare/:requestId']*  
+> The system calculates the base fare, ambulance type surcharge, and distance breakdown.
 >
-> In addition, we have full implementations for **bKash Tokenized Checkout** (`/bkash/create` and `/bkash/execute`) and **SSLCommerz** (`/sslcommerz/initiate` and IPN listener)."
+> Next, the patient initiates a Stripe checkout session.  
+> *[Send 'POST /api/v1/payments/stripe/checkout']*  
+> Status 201 Created. The backend creates a Payment record in 'PENDING' status and returns a hosted Stripe `checkoutUrl`.
+>
+> *[Open the checkoutUrl in the browser]*  
+> This takes the patient to Stripe's secure payment page, where they can pay using a test card.
+>
+> Once the payment succeeds, Stripe notifies our backend via a signed webhook.  
+> *[Send 'POST /api/v1/payments/stripe/webhook']*  
+> Our webhook verifies the cryptographic signature from Stripe. It marks the Payment as 'SUCCESS' and automatically marks the `EmergencyRequest` as 'COMPLETED'.
+>
+> Let's verify by fetching the payment record.  
+> *[Send 'GET /api/v1/payments/:requestId']*  
+> Status 200 OK. The payment status is now 'SUCCESS'.
+>
+> We also support bKash Tokenized Checkout and SSLCommerz using this same pattern."
 
 ---
 
-## 🎬 Part 6: Technical Challenge Solved (6:45 – 8:00)
+## 6. Technical Challenge (45–60 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> Switch to VS Code. Open `src/modules/dispatch/dispatch.service.ts` around line 20. Highlight `prisma.$transaction`.
 
-> Switch to VS Code: Open `src/modules/dispatch/dispatch.service.ts` around line 20-60.
-
-### 🗣️ What to Say:
-
-> "Now I'd like to highlight one of the most interesting technical challenges I solved: **Preventing Race Conditions & Double-Booking in Emergency Dispatch**.
+### 🗣️ What I say:
+> "Now I want to share a key technical challenge I solved: **Preventing Double-Booking and Race Conditions in Dispatch**.
 >
-> In an emergency system, two dispatchers might simultaneously attempt to assign the same advanced life support ambulance to two different emergencies. If not handled atomically, you get double-booking, which can have catastrophic real-world consequences.
+> In an emergency system, multiple dispatchers can try to assign the same ambulance to different emergencies at the exact same moment. If two requests get the same ambulance, someone in critical condition doesn't get help.
 >
-> Here in `dispatch.service.ts`, we solved this using **Prisma's Interactive Database Transactions**:
+> To solve this, I used **Prisma Interactive Database Transactions**.
 >
-> 1. Inside `prisma.$transaction`, we verify that the Ambulance exists, is `AVAILABLE`, and has no active dispatch.
-> 2. We verify that the Driver is marked `isAvailable: true`.
-> 3. We create the `Dispatch` record, generate the initial `TripStatusLog`, update the `EmergencyRequest` to `DISPATCHED`, mark the `Ambulance` as `DISPATCHED`, and set `driver.isAvailable` to `false`—**all inside a single ACID database transaction**.
+> Here in `dispatch.service.ts`, everything runs inside `prisma.$transaction`.
 >
-> If any condition fails, the entire transaction rolls back cleanly, guaranteeing zero double-allocations.
+> Inside the transaction:
+> 1. We check if the ambulance is currently `AVAILABLE`.
+> 2. We check if the driver is marked `isAvailable`.
+> 3. If valid, we create the `Dispatch` record, create the initial `TripStatusLog`, update the `EmergencyRequest` to `DISPATCHED`, update the ambulance to `DISPATCHED`, and set `driver.isAvailable` to `false`.
 >
-> On top of that, we integrated **Redis Cloud** caching on the analytics endpoint `/api/v1/admin/stats` with a 60-second TTL and automatic database fallback, ensuring high throughput under heavy traffic."
+> All five database operations succeed together, or all of them roll back. This completely eliminates race conditions and guarantees zero double-booking."
 
 ---
 
-## 🎬 Part 7: Automated Tests & Conclusion (8:00 – 8:30)
+## 7. Automated Tests & Wrap-Up (30 seconds)
 
-### 🖥️ On Screen:
+### 🖥️ What I show:
+> Open the VS Code integrated terminal. Type `npm test` and hit Enter. Let all tests run and turn green.
 
-> Switch to VS Code integrated terminal and run `npm test`.
-
-### 🗣️ What to Say:
-
-> "Finally, let's look at the testing suite.  
-> _(Run `npm test` in the terminal)_  
-> We have **65 automated test cases** written in **Vitest**, covering unit tests, controller validators, integration tests with a live database, and full End-to-End emergency lifecycle simulations.
+### 🗣️ What I say:
+> "Finally, let's verify our automated test suite.
 >
-> Everything passes with 100% green status, zero TypeScript warnings, and clean Biome linting.
+> *[Run `npm test`]*  
+> We have **65 automated tests** written in **Vitest**. They cover unit tests, validation schemas, live database integration tests, and full End-to-End emergency lifecycles.
 >
-> To conclude: This backend delivers a resilient, secure, and production-ready solution for emergency ambulance logistics. Thank you for your time and review!"
-
----
-
-### 🎯 Pro-Tips Before You Hit Record:
-
-1. **Resolution:** Set your screen recording to 1080p (1920x1080).
-2. **Audio:** Do a 15-second mic check to make sure your voice is clear and not echoing.
-3. **Pacing:** Keep a steady, confident pace. Don't rush; pause for half a second when switching tabs.
-4. **Link Sharing:** When uploading to Google Drive or Loom, verify the link is accessible in an Incognito window!
+> As you can see, all 10 test suites and 65 tests pass cleanly.
+>
+> Thank you for your time and for reviewing my project!"
