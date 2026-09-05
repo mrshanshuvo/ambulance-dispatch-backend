@@ -22,13 +22,10 @@ router.post(
   validate(createAdminDriverSchema),
   asyncHandler(async (req, res) => {
     const result = await adminService.createDriverByAdmin(req.body);
-    await logAudit(
-      req.user?.userId,
-      "CREATE",
-      "Driver",
-      result.driver.id,
-      { email: result.user.email, licenseNumber: result.driver.licenseNumber },
-    );
+    await logAudit(req.user?.userId, "CREATE", "Driver", result.id, {
+      email: result.user.email,
+      licenseNumber: result.licenseNumber,
+    });
     sendSuccess(res, "Driver created successfully", result, 201);
   }),
 );

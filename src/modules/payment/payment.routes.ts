@@ -7,6 +7,7 @@ import {
   createBkashCheckoutSchema,
   createCheckoutSchema,
   executeBkashSchema,
+  getFareSchema,
   initSSLCommerzSchema,
 } from "./payment.validator";
 
@@ -66,6 +67,15 @@ router.post("/sslcommerz/cancel", paymentController.sslcommerzCancel);
 
 // POST /api/v1/payments/sslcommerz/ipn — SSLCommerz IPN webhook
 router.post("/sslcommerz/ipn", paymentController.sslcommerzIPN);
+
+// GET /api/v1/payments/fare/:requestId — Patient or Admin views calculated fare estimate
+router.get(
+  "/fare/:requestId",
+  authenticate,
+  authorize("PATIENT", "ADMIN"),
+  validate(getFareSchema),
+  paymentController.getFareEstimate,
+);
 
 // GET /api/v1/payments/:requestId — Patient or Admin views payment status
 router.get(

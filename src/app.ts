@@ -26,6 +26,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // Body parsing (for all routes)
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Root Welcome / API Info Endpoint
 app.get("/", (_req, res) => {

@@ -60,7 +60,13 @@ export const createDriverByAdmin = async (data: CreateAdminDriverInput) => {
         ambulanceId: data.ambulanceId || null,
         isAvailable: true,
       },
-      include: {
+      select: {
+        id: true,
+        licenseNumber: true,
+        isAvailable: true,
+        ambulanceId: true,
+        createdAt: true,
+        updatedAt: true,
         ambulance: {
           select: {
             id: true,
@@ -69,12 +75,19 @@ export const createDriverByAdmin = async (data: CreateAdminDriverInput) => {
             status: true,
           },
         },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            phone: true,
+            createdAt: true,
+          },
+        },
       },
     });
 
-    return {
-      user,
-      driver,
-    };
+    return driver;
   });
 };

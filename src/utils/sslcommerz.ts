@@ -51,6 +51,7 @@ export const initSSLCommerzPayment = async (params: {
     fail_url: `${backendBaseUrl}/api/v1/payments/sslcommerz/fail?requestId=${params.requestId}`,
     cancel_url: `${backendBaseUrl}/api/v1/payments/sslcommerz/cancel?requestId=${params.requestId}`,
     ipn_url: `${backendBaseUrl}/api/v1/payments/sslcommerz/ipn`,
+    value_a: params.requestId,
     shipping_method: "NO",
     product_name: "Emergency Ambulance Service",
     product_category: "Healthcare",

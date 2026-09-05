@@ -1282,7 +1282,7 @@
         },
         {
           "name": "07.2 Trip Status Transitions",
-          "description": "Valid status progression: `ASSIGNED` → `EN_ROUTE` → `ON_SCENE` → `TRANSPORTING` → `COMPLETED`",
+          "description": "Valid status progression: `DISPATCHED` → `EN_ROUTE` → `PATIENT_PICKUP` → `HOSPITAL_SELECTED` → `HOSPITAL_ARRIVAL` → `COMPLETED`",
           "item": [
             {
               "name": "Update Dispatch Status — EN_ROUTE (DRIVER / ADMIN)",
@@ -1312,7 +1312,7 @@
               }
             },
             {
-              "name": "Update Dispatch Status — ON_SCENE (DRIVER / ADMIN)",
+              "name": "Update Dispatch Status — PATIENT_PICKUP (DRIVER / ADMIN)",
               "event": [
                 {
                   "listen": "test",
@@ -1329,13 +1329,76 @@
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"ON_SCENE\",\n  \"note\": \"Ambulance has arrived at patient location\"\n}"
+                  "raw": "{\n  \"status\": \"PATIENT_PICKUP\",\n  \"note\": \"Ambulance has arrived at patient location and picked up patient\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
                 }
+              }
+            },
+            {
+              "name": "Update Dispatch Status — HOSPITAL_SELECTED (DRIVER / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Dispatch has hospital assigned', () => {",
+                      "    pm.expect(pm.response.json().data.status).to.equal('HOSPITAL_SELECTED');",
+                      "    pm.expect(pm.response.json().data).to.have.property('hospitalId');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"HOSPITAL_SELECTED\",\n  \"hospitalId\": \"{{hospitalId}}\",\n  \"note\": \"Patient assessed; en route to designated emergency hospital\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
+                },
+                "description": "After picking up the patient, system/driver selects the destination hospital from available hospitals."
+              }
+            },
+            {
+              "name": "Update Dispatch Status — HOSPITAL_ARRIVAL (DRIVER / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Status is HOSPITAL_ARRIVAL', () => {",
+                      "    pm.expect(pm.response.json().data.status).to.equal('HOSPITAL_ARRIVAL');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"HOSPITAL_ARRIVAL\",\n  \"note\": \"Ambulance has arrived at hospital emergency gate\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/{{dispatchId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "{{dispatchId}}", "status"]
+                },
+                "description": "Ambulance arrives at the hospital emergency ward with the patient."
               }
             },
             {
@@ -1389,17 +1452,17 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
-                      "pm.test('Returns user with DRIVER role and driver profile', () => {",
+                      "pm.test('Returns driver entity with nested DRIVER user', () => {",
                       "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('id');",
+                      "    pm.expect(data).to.have.property('licenseNumber');",
                       "    pm.expect(data.user.role).to.equal('DRIVER');",
-                      "    pm.expect(data.driver).to.have.property('licenseNumber');",
-                      "    pm.expect(data.driver).to.have.property('id');",
                       "});",
                       "if (pm.response.code === 201) {",
                       "    const data = pm.response.json().data;",
-                      "    pm.collectionVariables.set('driverId', data.driver.id);",
+                      "    pm.collectionVariables.set('driverId', data.id);",
                       "    pm.collectionVariables.set('driverUserId', data.user.id);",
-                      "    pm.environment.set('driverId', data.driver.id);",
+                      "    pm.environment.set('driverId', data.id);",
                       "    pm.environment.set('driverUserId', data.user.id);",
                       "}"
                     ]
@@ -1591,6 +1654,37 @@
         {
           "name": "09.1 Common / Status",
           "item": [
+            {
+              "name": "Get Fare Estimate (PATIENT / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Returns itemized fare breakdown and total fare', () => {",
+                      "    const data = pm.response.json().data;",
+                      "    pm.expect(data).to.have.property('fare');",
+                      "    pm.expect(data.fare).to.have.property('baseFare');",
+                      "    pm.expect(data.fare).to.have.property('distanceFare');",
+                      "    pm.expect(data.fare).to.have.property('totalFare');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/payments/fare/{{requestId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "payments", "fare", "{{requestId}}"]
+                },
+                "description": "Calculates an itemized, server-authoritative fare quotation based on ambulance equipment level, Haversine GPS distance to destination hospital, and emergency priority."
+              }
+            },
             {
               "name": "Get Payment Status (PATIENT / ADMIN)",
               "event": [

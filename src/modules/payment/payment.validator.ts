@@ -6,7 +6,8 @@ export const createCheckoutSchema = z.object({
     amount: z
       .number()
       .positive("Amount must be positive")
-      .min(10, "Minimum amount is 10 BDT"),
+      .min(10, "Minimum amount is 10 BDT")
+      .optional(),
     currency: z.string().default("bdt"),
   }),
 });
@@ -17,7 +18,8 @@ export const createBkashCheckoutSchema = z.object({
     amount: z
       .number()
       .positive("Amount must be positive")
-      .min(10, "Minimum amount is 10 BDT"),
+      .min(10, "Minimum amount is 10 BDT")
+      .optional(),
     payerReference: z.string().optional(),
   }),
 });
@@ -35,7 +37,14 @@ export const initSSLCommerzSchema = z.object({
     amount: z
       .number()
       .positive("Amount must be positive")
-      .min(10, "Minimum amount is 10 BDT"),
+      .min(10, "Minimum amount is 10 BDT")
+      .optional(),
+  }),
+});
+
+export const getFareSchema = z.object({
+  params: z.object({
+    requestId: z.string().uuid("Must be a valid request ID"),
   }),
 });
 

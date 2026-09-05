@@ -90,8 +90,9 @@ export const initSSLCommerz = asyncHandler(
 // POST /api/v1/payments/sslcommerz/success (Browser callback from SSLCommerz)
 export const sslcommerzSuccess = asyncHandler(
   async (req: Request, res: Response) => {
-    const requestId = req.query.requestId as string;
-    const { val_id } = req.body;
+    const requestId =
+      (req.query.requestId as string) || (req.body?.value_a as string);
+    const val_id = req.body?.val_id || req.query?.val_id;
 
     if (!requestId || !val_id) {
       throw new AppError("Invalid SSLCommerz success payload", 400);
@@ -144,6 +145,19 @@ export const sslcommerzIPN = asyncHandler(
       return;
     }
     res.json({ success: true, received: true });
+  },
+);
+
+// GET /api/v1/payments/fare/:requestId — Itemized fare quotation
+export const getFareEstimate = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
+    const result = await paymentService.getCalculatedFareForRequest(
+      req.params.requestId,
+      req.user.userId,
+      req.user.role,
+    );
+    sendSuccess(res, "Fare calculated successfully", result);
   },
 );
 

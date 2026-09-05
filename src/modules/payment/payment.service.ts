@@ -3,6 +3,10 @@ import { prisma } from "../../config/db";
 import { stripe } from "../../config/stripe";
 import { AppError } from "../../utils/AppError";
 import * as bkashHelper from "../../utils/bkash";
+import {
+  type FareBreakdown,
+  calculateTripFare,
+} from "../../utils/fareCalculator";
 import * as sslcommerzHelper from "../../utils/sslcommerz";
 import type {
   CreateBkashCheckoutInput,
@@ -10,6 +14,66 @@ import type {
   ExecuteBkashInput,
   InitSSLCommerzInput,
 } from "./payment.validator";
+
+// ─── Dynamic Fare Estimation ─────────────────────────────────────────────────
+
+export const getCalculatedFareForRequest = async (
+  requestId: string,
+  callerId?: string,
+  userRole?: string,
+): Promise<{ request: unknown; fare: FareBreakdown }> => {
+  const request = await prisma.emergencyRequest.findFirst({
+    where: {
+      id: requestId,
+      deletedAt: null,
+      ...(userRole !== "ADMIN" && callerId ? { callerId } : {}),
+    },
+    include: {
+      dispatch: {
+        include: {
+          ambulance: true,
+          hospital: true,
+        },
+      },
+    },
+  });
+
+  if (!request) {
+    throw new AppError("Emergency request not found", 404);
+  }
+
+  const ambulanceType = request.dispatch?.ambulance?.type ?? "BASIC";
+  const fare = calculateTripFare({
+    ambulanceType,
+    priority: request.priority,
+    pickupLat: request.pickupLat,
+    pickupLng: request.pickupLng,
+    hospitalLat: request.dispatch?.hospital?.lat,
+    hospitalLng: request.dispatch?.hospital?.lng,
+  });
+
+  return {
+    request: {
+      id: request.id,
+      priority: request.priority,
+      status: request.status,
+      pickupAddress: request.pickupAddress,
+      ambulance: request.dispatch?.ambulance
+        ? {
+            vehicleNumber: request.dispatch.ambulance.vehicleNumber,
+            type: request.dispatch.ambulance.type,
+          }
+        : null,
+      hospital: request.dispatch?.hospital
+        ? {
+            name: request.dispatch.hospital.name,
+            address: request.dispatch.hospital.address,
+          }
+        : null,
+    },
+    fare,
+  };
+};
 
 // ─── Create Stripe Checkout Session ──────────────────────────────────────────
 
@@ -19,7 +83,15 @@ export const createCheckoutSession = async (
 ) => {
   const request = await prisma.emergencyRequest.findFirst({
     where: { id: data.requestId, callerId, deletedAt: null },
-    include: { payment: true },
+    include: {
+      payment: true,
+      dispatch: {
+        include: {
+          ambulance: true,
+          hospital: true,
+        },
+      },
+    },
   });
   if (!request) {
     throw new AppError("Emergency request not found", 404);
@@ -36,7 +108,22 @@ export const createCheckoutSession = async (
     );
   }
 
-  const amountInPaisa = Math.round(data.amount * 100);
+  // Calculate authoritative fare if amount is not specified
+  let finalAmount = data.amount;
+  if (!finalAmount) {
+    const ambulanceType = request.dispatch?.ambulance?.type ?? "BASIC";
+    const fare = calculateTripFare({
+      ambulanceType,
+      priority: request.priority,
+      pickupLat: request.pickupLat,
+      pickupLng: request.pickupLng,
+      hospitalLat: request.dispatch?.hospital?.lat,
+      hospitalLng: request.dispatch?.hospital?.lng,
+    });
+    finalAmount = fare.totalFare;
+  }
+
+  const amountInPaisa = Math.round(finalAmount * 100);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -65,7 +152,7 @@ export const createCheckoutSession = async (
   const payment = await prisma.payment.upsert({
     where: { requestId: data.requestId },
     update: {
-      amount: data.amount,
+      amount: finalAmount,
       currency: data.currency.toUpperCase(),
       gateway: "STRIPE",
       sessionId: session.id,
@@ -73,7 +160,7 @@ export const createCheckoutSession = async (
     },
     create: {
       requestId: data.requestId,
-      amount: data.amount,
+      amount: finalAmount,
       currency: data.currency.toUpperCase(),
       gateway: "STRIPE",
       sessionId: session.id,
@@ -84,6 +171,7 @@ export const createCheckoutSession = async (
   return {
     sessionId: session.id,
     checkoutUrl: session.url,
+    amount: finalAmount,
     payment,
   };
 };
@@ -96,7 +184,15 @@ export const createBkashCheckout = async (
 ) => {
   const request = await prisma.emergencyRequest.findFirst({
     where: { id: data.requestId, callerId, deletedAt: null },
-    include: { payment: true },
+    include: {
+      payment: true,
+      dispatch: {
+        include: {
+          ambulance: true,
+          hospital: true,
+        },
+      },
+    },
   });
   if (!request) {
     throw new AppError("Emergency request not found", 404);
@@ -113,8 +209,23 @@ export const createBkashCheckout = async (
     );
   }
 
+  // Calculate authoritative fare if amount is not specified
+  let finalAmount = data.amount;
+  if (!finalAmount) {
+    const ambulanceType = request.dispatch?.ambulance?.type ?? "BASIC";
+    const fare = calculateTripFare({
+      ambulanceType,
+      priority: request.priority,
+      pickupLat: request.pickupLat,
+      pickupLng: request.pickupLng,
+      hospitalLat: request.dispatch?.hospital?.lat,
+      hospitalLng: request.dispatch?.hospital?.lng,
+    });
+    finalAmount = fare.totalFare;
+  }
+
   const bkashRes = await bkashHelper.createBkashPayment({
-    amount: data.amount,
+    amount: finalAmount,
     requestId: data.requestId,
     payerReference: data.payerReference,
   });
@@ -122,7 +233,7 @@ export const createBkashCheckout = async (
   const payment = await prisma.payment.upsert({
     where: { requestId: data.requestId },
     update: {
-      amount: data.amount,
+      amount: finalAmount,
       currency: "BDT",
       gateway: "BKASH",
       sessionId: bkashRes.paymentID,
@@ -130,7 +241,7 @@ export const createBkashCheckout = async (
     },
     create: {
       requestId: data.requestId,
-      amount: data.amount,
+      amount: finalAmount,
       currency: "BDT",
       gateway: "BKASH",
       sessionId: bkashRes.paymentID,
@@ -141,6 +252,7 @@ export const createBkashCheckout = async (
   return {
     paymentID: bkashRes.paymentID,
     bkashURL: bkashRes.bkashURL,
+    amount: finalAmount,
     payment,
   };
 };
@@ -189,7 +301,16 @@ export const initSSLCommerzPayment = async (
 ) => {
   const request = await prisma.emergencyRequest.findFirst({
     where: { id: data.requestId, callerId, deletedAt: null },
-    include: { caller: true, payment: true },
+    include: {
+      caller: true,
+      payment: true,
+      dispatch: {
+        include: {
+          ambulance: true,
+          hospital: true,
+        },
+      },
+    },
   });
   if (!request) {
     throw new AppError("Emergency request not found", 404);
@@ -206,8 +327,23 @@ export const initSSLCommerzPayment = async (
     );
   }
 
+  // Calculate authoritative fare if amount is not specified
+  let finalAmount = data.amount;
+  if (!finalAmount) {
+    const ambulanceType = request.dispatch?.ambulance?.type ?? "BASIC";
+    const fare = calculateTripFare({
+      ambulanceType,
+      priority: request.priority,
+      pickupLat: request.pickupLat,
+      pickupLng: request.pickupLng,
+      hospitalLat: request.dispatch?.hospital?.lat,
+      hospitalLng: request.dispatch?.hospital?.lng,
+    });
+    finalAmount = fare.totalFare;
+  }
+
   const sslRes = await sslcommerzHelper.initSSLCommerzPayment({
-    amount: data.amount,
+    amount: finalAmount,
     requestId: data.requestId,
     customerName: request.caller.name,
     customerEmail: request.caller.email,
@@ -218,7 +354,7 @@ export const initSSLCommerzPayment = async (
   const payment = await prisma.payment.upsert({
     where: { requestId: data.requestId },
     update: {
-      amount: data.amount,
+      amount: finalAmount,
       currency: "BDT",
       gateway: "SSLCOMMERZ",
       sessionId: sslRes.sessionkey,
@@ -226,7 +362,7 @@ export const initSSLCommerzPayment = async (
     },
     create: {
       requestId: data.requestId,
-      amount: data.amount,
+      amount: finalAmount,
       currency: "BDT",
       gateway: "SSLCOMMERZ",
       sessionId: sslRes.sessionkey,
@@ -235,8 +371,11 @@ export const initSSLCommerzPayment = async (
   });
 
   return {
-    sessionkey: sslRes.sessionkey,
+    gatewayUrl: sslRes.GatewayPageURL,
     gatewayPageURL: sslRes.GatewayPageURL,
+    sessionKey: sslRes.sessionkey,
+    sessionkey: sslRes.sessionkey,
+    amount: finalAmount,
     payment,
   };
 };

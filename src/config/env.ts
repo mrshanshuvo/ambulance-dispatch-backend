@@ -48,7 +48,7 @@ export const envConfig = {
     isLive: process.env.SSLCOMMERZ_IS_LIVE === "true",
     sessionUrl:
       process.env.SSLCOMMERZ_SESSION_URL ||
-      "https://sandbox.sslcommerz.com/gwprocess/v4/process.php",
+      "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
     validationUrl:
       process.env.SSLCOMMERZ_VALIDATION_URL ||
       "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php",
