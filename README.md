@@ -189,42 +189,42 @@ Driver ──< Dispatch
 
 ### Dispatch (`/api/v1/dispatches`)
 
-| Method  | Endpoint      | Auth         | Description                                                          |
-| ------- | ------------- | ------------ | -------------------------------------------------------------------- |
-| `POST`  | `/`           | ADMIN        | Dispatch ambulance (atomic transaction)                              |
-| `GET`   | `/`           | ADMIN/DRIVER | List dispatches (`?status=&page=&limit=`; Driver sees own)           |
-| `GET`   | `/my-active`  | DRIVER       | Get driver's current ongoing assigned dispatch                       |
-| `GET`   | `/:id`        | ADMIN/DRIVER | Get dispatch + trip status timeline                                  |
-| `PATCH` | `/:id/status` | DRIVER/ADMIN | Advance trip status                                                  |
+| Method  | Endpoint      | Auth         | Description                                                |
+| ------- | ------------- | ------------ | ---------------------------------------------------------- |
+| `POST`  | `/`           | ADMIN        | Dispatch ambulance (atomic transaction)                    |
+| `GET`   | `/`           | ADMIN/DRIVER | List dispatches (`?status=&page=&limit=`; Driver sees own) |
+| `GET`   | `/my-active`  | DRIVER       | Get driver's current ongoing assigned dispatch             |
+| `GET`   | `/:id`        | ADMIN/DRIVER | Get dispatch + trip status timeline                        |
+| `PATCH` | `/:id/status` | DRIVER/ADMIN | Advance trip status                                        |
 
 ### Payments (`/api/v1/payments`)
 
-| Method | Endpoint               | Auth          | Description                                                    |
-| ------ | ---------------------- | ------------- | -------------------------------------------------------------- |
-| `GET`  | `/fare/:requestId`     | PATIENT/ADMIN | Itemized GPS fare estimate quotation                           |
-| `GET`  | `/my`                  | PATIENT/ADMIN | Payment history (`?status=&page=&limit=`; Admin sees fleet)    |
-| `GET`  | `/:requestId`          | PATIENT/ADMIN | Get payment status by request ID                               |
-| `POST` | `/stripe/checkout`     | PATIENT       | Create Stripe checkout session                                 |
-| `POST` | `/stripe/webhook`      | Stripe Signed | Handle Stripe payment events                                   |
-| `POST` | `/bkash/create`        | PATIENT       | Create bKash payment URL (Tokenized PGW)                       |
-| `POST` | `/bkash/execute`       | PATIENT       | Execute & capture bKash payment                                |
-| `POST` | `/sslcommerz/initiate` | PATIENT       | Initialize SSLCommerz hosted session                           |
-| `POST` | `/sslcommerz/success`  | Public        | SSLCommerz success return & validation                         |
-| `POST` | `/sslcommerz/fail`     | Public        | SSLCommerz fail return                                         |
-| `POST` | `/sslcommerz/cancel`   | Public        | SSLCommerz cancellation return                                 |
-| `POST` | `/sslcommerz/ipn`      | Public        | SSLCommerz IPN background validation                           |
+| Method | Endpoint               | Auth          | Description                                                 |
+| ------ | ---------------------- | ------------- | ----------------------------------------------------------- |
+| `GET`  | `/fare/:requestId`     | PATIENT/ADMIN | Itemized GPS fare estimate quotation                        |
+| `GET`  | `/my`                  | PATIENT/ADMIN | Payment history (`?status=&page=&limit=`; Admin sees fleet) |
+| `GET`  | `/:requestId`          | PATIENT/ADMIN | Get payment status by request ID                            |
+| `POST` | `/stripe/checkout`     | PATIENT       | Create Stripe checkout session                              |
+| `POST` | `/stripe/webhook`      | Stripe Signed | Handle Stripe payment events                                |
+| `POST` | `/bkash/create`        | PATIENT       | Create bKash payment URL (Tokenized PGW)                    |
+| `POST` | `/bkash/execute`       | PATIENT       | Execute & capture bKash payment                             |
+| `POST` | `/sslcommerz/initiate` | PATIENT       | Initialize SSLCommerz hosted session                        |
+| `POST` | `/sslcommerz/success`  | Public        | SSLCommerz success return & validation                      |
+| `POST` | `/sslcommerz/fail`     | Public        | SSLCommerz fail return                                      |
+| `POST` | `/sslcommerz/cancel`   | Public        | SSLCommerz cancellation return                              |
+| `POST` | `/sslcommerz/ipn`      | Public        | SSLCommerz IPN background validation                        |
 
 ### Admin (`/api/v1/admin`)
 
-| Method   | Endpoint            | Auth  | Description                                                                              |
-| -------- | ------------------- | ----- | ---------------------------------------------------------------------------------------- |
-| `POST`   | `/drivers`          | ADMIN | Direct driver onboarding                                                                 |
-| `GET`    | `/users`            | ADMIN | List users (`?search=&role=&page=&limit=`)                                               |
-| `PATCH`  | `/users/:id/role`   | ADMIN | Update user role (`PATIENT`, `DRIVER`, `ADMIN`)                                          |
-| `PATCH`  | `/users/:id/status` | ADMIN | Toggle user active/deactive status (`isActive`)                                          |
-| `DELETE` | `/users/:id`        | ADMIN | Soft delete user                                                                         |
-| `GET`    | `/audit-logs`       | ADMIN | View audit trail (`?action=&entityType=&page=&limit=`, e.g. `?action=UPDATE_STATUS`)      |
-| `GET`    | `/stats`            | ADMIN | View cached dashboard statistics & summary metrics                                       |
+| Method   | Endpoint            | Auth  | Description                                                                          |
+| -------- | ------------------- | ----- | ------------------------------------------------------------------------------------ |
+| `POST`   | `/drivers`          | ADMIN | Direct driver onboarding                                                             |
+| `GET`    | `/users`            | ADMIN | List users (`?search=&role=&page=&limit=`)                                           |
+| `PATCH`  | `/users/:id/role`   | ADMIN | Update user role (`PATIENT`, `DRIVER`, `ADMIN`)                                      |
+| `PATCH`  | `/users/:id/status` | ADMIN | Toggle user active/deactive status (`isActive`)                                      |
+| `DELETE` | `/users/:id`        | ADMIN | Soft delete user                                                                     |
+| `GET`    | `/audit-logs`       | ADMIN | View audit trail (`?action=&entityType=&page=&limit=`, e.g. `?action=UPDATE_STATUS`) |
+| `GET`    | `/stats`            | ADMIN | View cached dashboard statistics & summary metrics                                   |
 
 ---
 
