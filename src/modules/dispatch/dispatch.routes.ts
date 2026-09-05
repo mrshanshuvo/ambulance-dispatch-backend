@@ -9,6 +9,7 @@ import { sendSuccess } from "../../utils/response";
 import * as dispatchService from "./dispatch.service";
 import {
   createDispatchSchema,
+  listDispatchesQuerySchema,
   updateDispatchStatusSchema,
 } from "./dispatch.validator";
 
@@ -38,6 +39,7 @@ router.get(
   "/",
   authenticate,
   authorize("ADMIN", "DRIVER"),
+  validate(listDispatchesQuerySchema),
   asyncHandler(async (req, res) => {
     const result = await dispatchService.listDispatches(req);
     sendSuccess(res, "Dispatches fetched successfully", {

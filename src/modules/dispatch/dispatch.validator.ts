@@ -24,7 +24,35 @@ export const updateDispatchStatusSchema = z.object({
   }),
 });
 
+export const listDispatchesQuerySchema = z.object({
+  query: z
+    .object({
+      status: z
+        .enum([
+          "DISPATCHED",
+          "EN_ROUTE",
+          "PATIENT_PICKUP",
+          "HOSPITAL_SELECTED",
+          "HOSPITAL_ARRIVAL",
+          "COMPLETED",
+        ])
+        .optional(),
+      page: z
+        .string()
+        .regex(/^\d+$/, "Page must be a positive number")
+        .optional(),
+      limit: z
+        .string()
+        .regex(/^\d+$/, "Limit must be a positive number")
+        .optional(),
+    })
+    .optional(),
+});
+
 export type CreateDispatchInput = z.infer<typeof createDispatchSchema>["body"];
 export type UpdateDispatchStatusInput = z.infer<
   typeof updateDispatchStatusSchema
 >["body"];
+export type ListDispatchesQueryInput = z.infer<
+  typeof listDispatchesQuerySchema
+>["query"];

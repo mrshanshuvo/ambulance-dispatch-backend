@@ -48,9 +48,28 @@ export const getFareSchema = z.object({
   }),
 });
 
+export const listPaymentsQuerySchema = z.object({
+  query: z
+    .object({
+      status: z.enum(["PENDING", "SUCCESS", "FAILED", "REFUNDED"]).optional(),
+      page: z
+        .string()
+        .regex(/^\d+$/, "Page must be a positive number")
+        .optional(),
+      limit: z
+        .string()
+        .regex(/^\d+$/, "Limit must be a positive number")
+        .optional(),
+    })
+    .optional(),
+});
+
 export type CreateCheckoutInput = z.infer<typeof createCheckoutSchema>["body"];
 export type CreateBkashCheckoutInput = z.infer<
   typeof createBkashCheckoutSchema
 >["body"];
 export type ExecuteBkashInput = z.infer<typeof executeBkashSchema>["body"];
 export type InitSSLCommerzInput = z.infer<typeof initSSLCommerzSchema>["body"];
+export type ListPaymentsQueryInput = z.infer<
+  typeof listPaymentsQuerySchema
+>["query"];

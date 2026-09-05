@@ -185,4 +185,77 @@ describe("Payment Integration Tests (Stripe & bKash)", () => {
       expect(reqCheck?.status).toBe("COMPLETED");
     });
   });
+
+  describe("Payment Listing: GET /api/v1/payments/my", () => {
+    let adminToken = "";
+
+    it("Setup: Create and login ADMIN user", async () => {
+      const passwordHash = await bcrypt.hash("Password123", 12);
+      const adminUser = await prisma.user.create({
+        data: {
+          name: `Payment Admin ${timestamp}`,
+          email: `pay_admin_${timestamp}@example.com`,
+          passwordHash,
+          role: "ADMIN",
+        },
+      });
+
+      const loginRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: adminUser.email, password: "Password123" });
+      adminToken = loginRes.body.data.accessToken;
+      expect(adminToken).toBeDefined();
+    });
+
+    it("PATIENT can fetch their own payment history with pagination", async () => {
+      const res = await request(app)
+        .get("/api/v1/payments/my?page=1&limit=5")
+        .set("Authorization", `Bearer ${patientToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data.payments)).toBe(true);
+      expect(res.body.data.meta).toBeDefined();
+      expect(res.body.data.meta.page).toBe(1);
+      expect(res.body.data.meta.limit).toBe(5);
+    });
+
+    it("PATIENT can filter payment history by ?status=SUCCESS", async () => {
+      const res = await request(app)
+        .get("/api/v1/payments/my?status=SUCCESS")
+        .set("Authorization", `Bearer ${patientToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data.payments)).toBe(true);
+      for (const p of res.body.data.payments) {
+        expect(p.status).toBe("SUCCESS");
+      }
+    });
+
+    it("ADMIN can view system-wide payment records", async () => {
+      const res = await request(app)
+        .get("/api/v1/payments/my?page=1&limit=10")
+        .set("Authorization", `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data.payments)).toBe(true);
+      expect(res.body.data.meta.total).toBeGreaterThanOrEqual(1);
+    });
+
+    it("Rejects invalid query parameters with 422", async () => {
+      const res = await request(app)
+        .get("/api/v1/payments/my?status=INVALID_STATUS")
+        .set("Authorization", `Bearer ${patientToken}`);
+
+      expect(res.status).toBe(422);
+      expect(res.body.success).toBe(false);
+    });
+
+    it("Rejects unauthenticated requests with 401", async () => {
+      const res = await request(app).get("/api/v1/payments/my");
+      expect(res.status).toBe(401);
+    });
+  });
 });

@@ -9,6 +9,7 @@ import {
   executeBkashSchema,
   getFareSchema,
   initSSLCommerzSchema,
+  listPaymentsQuerySchema,
 } from "./payment.validator";
 
 const router = Router();
@@ -82,6 +83,7 @@ router.get(
   "/my",
   authenticate,
   authorize("PATIENT", "ADMIN"),
+  validate(listPaymentsQuerySchema),
   paymentController.getMyPayments,
 );
 
