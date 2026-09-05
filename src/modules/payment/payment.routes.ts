@@ -77,6 +77,14 @@ router.get(
   paymentController.getFareEstimate,
 );
 
+// GET /api/v1/payments/my — Patient views their payment history
+router.get(
+  "/my",
+  authenticate,
+  authorize("PATIENT"),
+  paymentController.getMyPayments,
+);
+
 // GET /api/v1/payments/:requestId — Patient or Admin views payment status
 router.get(
   "/:requestId",

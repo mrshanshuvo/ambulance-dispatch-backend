@@ -1,3 +1,4 @@
+import type { Request } from "express";
 import type Stripe from "stripe";
 import { prisma } from "../../config/db";
 import { stripe } from "../../config/stripe";
@@ -7,6 +8,7 @@ import {
   type FareBreakdown,
   calculateTripFare,
 } from "../../utils/fareCalculator";
+import { buildMeta, getPagination } from "../../utils/pagination";
 import * as sslcommerzHelper from "../../utils/sslcommerz";
 import type {
   CreateBkashCheckoutInput,
@@ -514,4 +516,43 @@ export const handleStripeWebhook = async (
   }
 
   return { received: true };
+};
+
+// ─── Patient Payment History ──────────────────────────────────────────────────
+
+export const getMyPayments = async (callerId: string, req: Request) => {
+  const { page, limit, skip } = getPagination(req);
+
+  const where = {
+    request: {
+      callerId,
+      deletedAt: null,
+    },
+  };
+
+  const [total, payments] = await Promise.all([
+    prisma.payment.count({ where }),
+    prisma.payment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        request: {
+          select: {
+            id: true,
+            pickupAddress: true,
+            priority: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    payments,
+    meta: buildMeta(page, limit, total),
+  };
 };

@@ -1,5 +1,7 @@
+import type { Request } from "express";
 import { prisma } from "../../config/db";
 import { AppError } from "../../utils/AppError";
+import { buildMeta, getPagination } from "../../utils/pagination";
 import type {
   CreateDispatchInput,
   UpdateDispatchStatusInput,
@@ -123,4 +125,117 @@ export const updateDispatchStatus = async (
 
     return updated;
   });
+};
+
+export const listDispatches = async (req: Request) => {
+  const { page, limit, skip } = getPagination(req);
+  const { status } = req.query as { status?: string };
+
+  const where = {
+    ...(status && { status: status as never }),
+  };
+
+  const [total, dispatches] = await Promise.all([
+    prisma.dispatch.count({ where }),
+    prisma.dispatch.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { dispatchedAt: "desc" },
+      include: {
+        ambulance: {
+          select: {
+            id: true,
+            vehicleNumber: true,
+            type: true,
+            status: true,
+          },
+        },
+        driver: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+        request: {
+          select: {
+            id: true,
+            pickupAddress: true,
+            priority: true,
+            status: true,
+          },
+        },
+        hospital: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    dispatches,
+    meta: buildMeta(page, limit, total),
+  };
+};
+
+export const getMyActiveDispatch = async (userId: string) => {
+  const driver = await prisma.driver.findFirst({
+    where: { userId, deletedAt: null },
+  });
+
+  if (!driver) {
+    throw new AppError("Driver profile not found", 404);
+  }
+
+  const dispatch = await prisma.dispatch.findFirst({
+    where: {
+      driverId: driver.id,
+      status: { not: "COMPLETED" },
+    },
+    orderBy: { dispatchedAt: "desc" },
+    include: {
+      ambulance: {
+        select: {
+          id: true,
+          vehicleNumber: true,
+          type: true,
+          status: true,
+        },
+      },
+      request: {
+        select: {
+          id: true,
+          pickupAddress: true,
+          pickupLat: true,
+          pickupLng: true,
+          priority: true,
+          status: true,
+          description: true,
+          caller: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+            },
+          },
+        },
+      },
+      hospital: true,
+      tripStatusLogs: {
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+
+  return dispatch;
 };

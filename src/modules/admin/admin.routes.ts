@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../../config/db";
+import { redisClient } from "../../config/redis";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/rbac.middleware";
 import { validate } from "../../middlewares/validate.middleware";
@@ -94,6 +95,51 @@ router.patch(
   }),
 );
 
+// PATCH /api/v1/admin/users/:id/status — Activate/deactivate user
+router.patch(
+  "/users/:id/status",
+  asyncHandler(async (req, res) => {
+    const { isActive } = req.body;
+    if (typeof isActive !== "boolean") {
+      throw new AppError("isActive must be a boolean", 400);
+    }
+
+    if (req.params.id === req.user?.userId && !isActive) {
+      throw new AppError("You cannot deactivate your own account", 400);
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: { id: req.params.id, deletedAt: null },
+    });
+    if (!existingUser) {
+      throw new AppError("User not found", 404);
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isActive },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        updatedAt: true,
+      },
+    });
+
+    await logAudit(req.user?.userId, "UPDATE_STATUS", "User", user.id, {
+      isActive,
+    });
+
+    sendSuccess(
+      res,
+      `User ${isActive ? "activated" : "deactivated"} successfully`,
+      user,
+    );
+  }),
+);
+
 // DELETE /api/v1/admin/users/:id — Soft delete user
 router.delete(
   "/users/:id",
@@ -115,9 +161,15 @@ router.get(
   "/audit-logs",
   asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req);
-    const { entityType } = req.query as { entityType?: string };
+    const { action, entityType } = req.query as {
+      action?: string;
+      entityType?: string;
+    };
 
-    const where = { ...(entityType && { entityType }) };
+    const where = {
+      ...(action && { action }),
+      ...(entityType && { entityType }),
+    };
 
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
@@ -126,7 +178,7 @@ router.get(
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-          actor: { select: { name: true, email: true, role: true } },
+          actor: { select: { id: true, name: true, email: true, role: true } },
         },
       }),
       prisma.auditLog.count({ where }),
@@ -143,6 +195,24 @@ router.get(
 router.get(
   "/stats",
   asyncHandler(async (_req, res) => {
+    const CACHE_KEY = "admin:stats";
+
+    if (redisClient) {
+      try {
+        const cached = await redisClient.get(CACHE_KEY);
+        if (cached) {
+          sendSuccess(
+            res,
+            "Admin stats fetched successfully (cached)",
+            JSON.parse(cached),
+          );
+          return;
+        }
+      } catch (err: unknown) {
+        // Fallback to database on redis read failure
+      }
+    }
+
     const [
       totalUsers,
       totalDrivers,
@@ -198,6 +268,14 @@ router.get(
         currency: "BDT",
       },
     };
+
+    if (redisClient) {
+      try {
+        await redisClient.set(CACHE_KEY, JSON.stringify(stats), "EX", 60);
+      } catch (err: unknown) {
+        // Continue even if redis set fails
+      }
+    }
 
     sendSuccess(res, "Admin stats fetched successfully", stats);
   }),
