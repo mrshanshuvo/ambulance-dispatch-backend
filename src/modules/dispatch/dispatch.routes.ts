@@ -33,11 +33,11 @@ router.post(
   }),
 );
 
-// GET /api/v1/dispatches — ADMIN lists dispatches with pagination & status filter
+// GET /api/v1/dispatches — ADMIN or DRIVER lists dispatches with pagination & status filter
 router.get(
   "/",
   authenticate,
-  authorize("ADMIN"),
+  authorize("ADMIN", "DRIVER"),
   asyncHandler(async (req, res) => {
     const result = await dispatchService.listDispatches(req);
     sendSuccess(res, "Dispatches fetched successfully", {

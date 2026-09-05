@@ -77,11 +77,11 @@ router.get(
   paymentController.getFareEstimate,
 );
 
-// GET /api/v1/payments/my — Patient views their payment history
+// GET /api/v1/payments/my — Patient views their payment history, Admin views all payments
 router.get(
   "/my",
   authenticate,
-  authorize("PATIENT"),
+  authorize("PATIENT", "ADMIN"),
   paymentController.getMyPayments,
 );
 

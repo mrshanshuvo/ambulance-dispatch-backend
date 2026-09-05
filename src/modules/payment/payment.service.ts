@@ -520,14 +520,22 @@ export const handleStripeWebhook = async (
 
 // ─── Patient Payment History ──────────────────────────────────────────────────
 
-export const getMyPayments = async (callerId: string, req: Request) => {
+export const getMyPayments = async (
+  userId: string,
+  userRole: string,
+  req: Request,
+) => {
   const { page, limit, skip } = getPagination(req);
+  const { status } = req.query as { status?: string };
 
   const where = {
-    request: {
-      callerId,
-      deletedAt: null,
-    },
+    ...(userRole !== "ADMIN" && {
+      request: {
+        callerId: userId,
+        deletedAt: null,
+      },
+    }),
+    ...(status && { status: status as never }),
   };
 
   const [total, payments] = await Promise.all([
@@ -545,6 +553,14 @@ export const getMyPayments = async (callerId: string, req: Request) => {
             priority: true,
             status: true,
             createdAt: true,
+            caller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
           },
         },
       },

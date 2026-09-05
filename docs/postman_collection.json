@@ -1277,6 +1277,65 @@
                 },
                 "description": "Returns full dispatch details including ambulance, driver, and request info."
               }
+            },
+            {
+              "name": "List Dispatches (ADMIN / DRIVER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Returns list of dispatches with meta', () => {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json.data).to.have.property('dispatches');",
+                      "    pm.expect(json.data).to.have.property('meta');",
+                      "    pm.expect(Array.isArray(json.data.dispatches)).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches?page=1&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "status", "value": "DISPATCHED", "disabled": true, "description": "Filter by status: DISPATCHED | EN_ROUTE | PATIENT_PICKUP | HOSPITAL_SELECTED | HOSPITAL_ARRIVAL | COMPLETED" }
+                  ]
+                },
+                "description": "Returns paginated dispatches. Admins see all dispatches across the fleet; Drivers see their assigned dispatch history."
+              }
+            },
+            {
+              "name": "Get Driver Active Dispatch (DRIVER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/dispatches/my-active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "dispatches", "my-active"]
+                },
+                "description": "Allows an authenticated driver to instantly fetch their ongoing non-completed dispatch, including pickup GPS coordinates, patient info, and trip logs."
+              }
             }
           ]
         },
@@ -1551,6 +1610,37 @@
               }
             },
             {
+              "name": "Toggle User Status (Active/Deactive) (ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('User status is updated', () => {",
+                      "    pm.expect(pm.response.json().data).to.have.property('isActive');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isActive\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "admin", "users", "{{targetUserId}}", "status"]
+                },
+                "description": "Activates or deactivates a user account. Deactivated users cannot log into the system. Admin cannot deactivate their own account."
+              }
+            },
+            {
               "name": "Soft Delete User (ADMIN)",
               "event": [
                 {
@@ -1711,6 +1801,41 @@
                   "path": ["api", "v1", "payments", "{{requestId}}"]
                 },
                 "description": "Returns the payment record for a given emergency request. Status: `PENDING`, `SUCCESS`, `FAILED`, `REFUNDED`."
+              }
+            },
+            {
+              "name": "Get Payment History (PATIENT / ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('Returns payments array and pagination meta', () => {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json.data).to.have.property('payments');",
+                      "    pm.expect(json.data).to.have.property('meta');",
+                      "    pm.expect(Array.isArray(json.data.payments)).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/payments/my?page=1&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "payments", "my"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "status", "value": "SUCCESS", "disabled": true, "description": "Filter by status: PENDING | SUCCESS | FAILED | REFUNDED" }
+                  ]
+                },
+                "description": "Returns paginated payment transactions. Patients view their own history; Admins view all transactions across the platform."
               }
             },
             {

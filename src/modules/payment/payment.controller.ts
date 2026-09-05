@@ -161,11 +161,16 @@ export const getFareEstimate = asyncHandler(
   },
 );
 
-// GET /api/v1/payments/my — Patient views their payment history
+// GET /api/v1/payments/my — Patient views their payment history, Admin views all payments
 export const getMyPayments = asyncHandler(
   async (req: Request, res: Response) => {
-    if (!req.user?.userId) throw new AppError("Unauthorized", 401);
-    const result = await paymentService.getMyPayments(req.user.userId, req);
+    if (!req.user?.userId || !req.user?.role)
+      throw new AppError("Unauthorized", 401);
+    const result = await paymentService.getMyPayments(
+      req.user.userId,
+      req.user.role,
+      req,
+    );
     sendSuccess(res, "Payment history fetched successfully", {
       payments: result.payments,
       meta: result.meta,

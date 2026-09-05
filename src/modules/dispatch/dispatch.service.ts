@@ -131,8 +131,20 @@ export const listDispatches = async (req: Request) => {
   const { page, limit, skip } = getPagination(req);
   const { status } = req.query as { status?: string };
 
+  let driverIdFilter: string | undefined;
+  if (req.user?.role === "DRIVER") {
+    const driver = await prisma.driver.findFirst({
+      where: { userId: req.user.userId, deletedAt: null },
+    });
+    if (!driver) {
+      throw new AppError("Driver profile not found", 404);
+    }
+    driverIdFilter = driver.id;
+  }
+
   const where = {
     ...(status && { status: status as never }),
+    ...(driverIdFilter && { driverId: driverIdFilter }),
   };
 
   const [total, dispatches] = await Promise.all([

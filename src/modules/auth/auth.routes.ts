@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import passport from "passport";
 import "../../config/passport";
 import { authenticate } from "../../middlewares/auth.middleware";
@@ -13,11 +14,30 @@ import {
 
 const router = Router();
 
+// Stricter rate limiter for sensitive authentication endpoints (15 attempts per 15 minutes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message:
+      "Too many authentication attempts, please try again after 15 minutes",
+    errors: [],
+  },
+});
+
 // POST /api/v1/auth/register
-router.post("/register", validate(registerSchema), authController.register);
+router.post(
+  "/register",
+  authLimiter,
+  validate(registerSchema),
+  authController.register,
+);
 
 // POST /api/v1/auth/login
-router.post("/login", validate(loginSchema), authController.login);
+router.post("/login", authLimiter, validate(loginSchema), authController.login);
 
 // POST /api/v1/auth/logout — requires auth
 router.post("/logout", authenticate, authController.logout);
